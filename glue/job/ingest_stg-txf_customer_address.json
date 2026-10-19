@@ -1,0 +1,307 @@
+{
+	"jobConfig": {
+		"name": "ingest_stg-txf_customer_address",
+		"description": "",
+		"role": "arn:aws:iam::127225912918:role/AWSGlueServiceRole",
+		"command": "glueetl",
+		"version": "5.1",
+		"currentGlueVersion": "",
+		"runtime": null,
+		"workerType": "G.1X",
+		"numberOfWorkers": "2",
+		"maxCapacity": 2,
+		"jobRunQueuingEnabled": false,
+		"maxRetries": 0,
+		"timeout": 480,
+		"maxConcurrentRuns": 1,
+		"security": "none",
+		"scriptName": "ingest_stg-txf_customer_address.py",
+		"scriptLocation": "s3://aws-glue-assets-127225912918-ap-southeast-2/scripts/",
+		"language": "python-3",
+		"spark": false,
+		"jobParameters": [],
+		"tags": [],
+		"jobMode": "NOTEBOOK_MODE",
+		"createdOn": "2026-10-18T08:53:56.269Z",
+		"developerMode": false,
+		"connectionsList": [],
+		"temporaryDirectory": "s3://aws-glue-assets-127225912918-ap-southeast-2/temporary/",
+		"glueHiveMetastore": true,
+		"etlAutoTuning": false,
+		"metrics": "",
+		"pythonShellPrebuiltLibraryOption": "analytics",
+		"flexExecution": false,
+		"minFlexWorkers": null,
+		"sourceControlDetails": {
+			"Provider": "GITHUB",
+			"Repository": "AWS-End-to-End-Data-Pipeline",
+			"Branch": "main",
+			"Folder": "glue/job/"
+		},
+		"maintenanceWindow": null,
+		"bookmark": "",
+		"observabilityMetrics": "",
+		"logging": "",
+		"sparkPath": "",
+		"serverEncryption": false,
+		"pythonPath": "",
+		"dependentPath": "",
+		"referencedPath": "",
+		"etlAutoScaling": false,
+		"etlAutoTuningJobRules": "",
+		"pythonVersion": ""
+	},
+	"hasBeenSaved": false,
+	"usageProfileName": null,
+	"script": "\nimport sys\nfrom awsglue.transforms import *\nfrom awsglue.utils import getResolvedOptions\nfrom pyspark.context import SparkContext\nfrom awsglue.context import GlueContext\nfrom awsglue.job import Job\n  \nsc = SparkContext.getOrCreate()\nglueContext = GlueContext(sc)\nspark = glueContext.spark_session\njob = Job(glueContext)\n# import time\nimport sys\nimport boto3\nfrom datetime import datetime, timezone, timedelta\nfrom zoneinfo import ZoneInfo\nfrom urllib.parse import urlsplit\nfrom botocore.config import Config\nfrom botocore.exceptions import ClientError\nfrom awsglue.dynamicframe import DynamicFrame\nfrom pyspark.sql import functions as F\nfrom pyspark.sql.types import StructType, StructField, StringType, TimestampType\n\nINPUT_DATE = None  # Otomatis H-1 WIB. Untuk manual, isi tanggal contohnya \"2026-03-26\".\nDATE_PROCESS = None  # None = tanggal proses saat ini di WIB.\nBASE_PATH = \"s3://s3-datalake-dev/bronze-stg/customer_address_csv/\"\nOUTPUT_PATH = \"s3://s3-datalake-dev/silver-txf/txf_customers_address/\"\nSOURCE_DATABASE = \"bronze_stg\"\nSOURCE_TABLE = \"customer_address_csv\"\nTARGET_DATABASE = \"silver_txf\"\nTARGET_TABLE = \"txf_customers_address\"\nCOLUMNS = [\"id\", \"customer_id\", \"address\", \"city\", \"province\", \"created_at\"]\n\nnames = [name for name in (\"JOB_NAME\", \"input_date\", \"date_process\")\n         if any(arg == f\"--{name}\" or arg.startswith(f\"--{name}=\") for arg in sys.argv)]\nargs = getResolvedOptions(sys.argv, names) if names else {}\nINPUT_DATE = args.get(\"input_date\", INPUT_DATE)\nDATE_PROCESS = args.get(\"date_process\", DATE_PROCESS)\njob.init(args.get(\"JOB_NAME\", \"nb_ingest_stg_customer_address\"), args)\n\nspark.conf.set(\"spark.sql.session.timeZone\", \"Asia/Jakarta\")\nspark.conf.set(\"spark.sql.shuffle.partitions\", \"4\")\nspark.conf.set(\"spark.sql.caseSensitive\", \"true\")\nconfig = Config(retries={\"mode\": \"standard\", \"total_max_attempts\": 1},\n                connect_timeout=5, read_timeout=10)\ns3 = boto3.client(\"s3\", config=config)\nglue = boto3.client(\"glue\", config=config)\ndef validate_date(value):\n    parsed = datetime.strptime(value, \"%Y-%m-%d\")\n    if parsed.strftime(\"%Y-%m-%d\") != value:\n        raise ValueError(\"Tanggal harus YYYY-MM-DD\")\n    return value\n\n\ndef get_file_path(ds):\n    filename = f\"customer_address_{validate_date(ds).replace('-', '')}.csv\"\n    return BASE_PATH.rstrip(\"/\") + \"/\" + filename\n\n\ndef signature(info):\n    return tuple(info.get(key) for key in\n                 (\"ContentLength\", \"ETag\", \"LastModified\", \"VersionId\"))\n\ndef assert_unique_customer(frame, label):\n    if frame.filter(F.col(\"customer_id\").isNull()\n                    | (F.trim(F.col(\"customer_id\")) == \"\")).limit(1).count():\n        raise ValueError(f\"{label}: customer_id null/kosong\")\n    if frame.groupBy(\"customer_id\").count().filter(F.col(\"count\") > 1).limit(1).count():\n        raise ValueError(f\"{label}: customer_id duplikat\")\n\n\ndef find_latest_snapshot():\n    uri = urlsplit(OUTPUT_PATH)\n    root = uri.path.lstrip(\"/\").rstrip(\"/\") + \"/\"\n    dates = []\n    for page in s3.get_paginator(\"list_objects_v2\").paginate(\n            Bucket=uri.netloc, Prefix=root, Delimiter=\"/\"):\n        if any(obj[\"Key\"].endswith(\".parquet\") for obj in page.get(\"Contents\", [])):\n            raise ValueError(\"Target masih memiliki Parquet tanpa partisi; migrasikan output lama dahulu\")\n        for item in page.get(\"CommonPrefixes\", []):\n            folder = item[\"Prefix\"][len(root):].rstrip(\"/\")\n            if not folder.startswith(\"date_process=\"):\n                raise ValueError(f\"Folder target tidak dikenal: {folder}\")\n            dates.append(validate_date(folder.split(\"=\", 1)[1]))\n    return max(dates) if dates else None\nrun_date = datetime.now(ZoneInfo(\"Asia/Jakarta\")).date()\ntoday = run_date.isoformat()\nyesterday = (run_date - timedelta(days=1)).isoformat()\n# Prioritas: --input_date dari job, INPUT_DATE manual di cell, lalu H-1 WIB.\ninput_date = validate_date(yesterday if INPUT_DATE is None else INPUT_DATE)\n\ndate_process = validate_date(DATE_PROCESS or today)\nfile_path = get_file_path(input_date)\nprint(f\"Source: {file_path}\")\nprint(f\"Output: {OUTPUT_PATH}date_process={date_process}/\")\n\nuri = urlsplit(file_path)\n\ntry:\n    file_info = s3.head_object(\n        Bucket=uri.netloc,\n        Key=uri.path.lstrip(\"/\")\n    )\nexcept ClientError as error:\n    if (\n        error.operation_name == \"HeadObject\"\n        and error.response[\"Error\"][\"Code\"]\n        in (\"404\", \"NoSuchKey\", \"NotFound\")\n    ):\n        raise FileNotFoundError(\n            f\"File tidak ditemukan: {file_path}\"\n        ) from error\n    raise\n\nif file_info[\"ContentLength\"] == 0:\n    raise ValueError(\"File CSV kosong\")\n\nstable_signature = signature(file_info)\ntable = glue.get_table(DatabaseName=SOURCE_DATABASE, Name=SOURCE_TABLE)[\"Table\"]\ndescriptor = table[\"StorageDescriptor\"]\nif descriptor[\"Location\"].rstrip(\"/\") != BASE_PATH.rstrip(\"/\"):\n    raise ValueError(\"Location tabel source berbeda dari BASE_PATH; periksa konfigurasi\")\ncolumns = descriptor[\"Columns\"]\nif [c[\"Name\"] for c in columns] != COLUMNS or any(c[\"Type\"] != \"string\" for c in columns):\n    raise ValueError(\"Schema source harus enam kolom string sesuai header CSV\")\n\nsource_schema = StructType([StructField(c[\"Name\"], StringType(), True) for c in columns])\nsource_df = (spark.read.schema(source_schema)\n             .option(\"header\", \"true\")\n             .option(\"sep\", \"|@~\")\n             .option(\"enforceSchema\", \"false\")\n             .option(\"mode\", \"FAILFAST\")\n             .csv(file_path))\ndyf = DynamicFrame.fromDF(source_df, glueContext, \"src_customer_address\")\ndyf.printSchema()\ndf = dyf.toDF()\nconverted = df.withColumn(\"_created_at\", F.expr(\"try_cast(created_at AS timestamp)\"))\ninvalid_timestamp = (F.col(\"created_at\").isNotNull()\n                     & (F.trim(F.col(\"created_at\")) != \"\")\n                     & F.col(\"_created_at\").isNull())\nif converted.filter(invalid_timestamp).limit(1).count():\n    raise ValueError(\"Ada created_at yang tidak dapat dikonversi menjadi timestamp\")\n\nincoming = converted.select(\n    F.col(\"id\").cast(\"bigint\").alias(\"id\"),\n    F.col(\"customer_id\").cast(\"bigint\").alias(\"customer_id\"),\n    F.col(\"address\").cast(\"string\").alias(\"address\"),\n    F.col(\"city\").cast(\"string\").alias(\"city\"),\n    F.col(\"province\").cast(\"string\").alias(\"province\"),\n    F.date_trunc(\n        \"millisecond\", F.col(\"_created_at\")\n    ).alias(\"created_at\"),\n    F.lit(datetime.now(timezone.utc))\n     .cast(\"timestamp\")\n     .alias(\"load_timestamp\"),\n).localCheckpoint(eager=True)\n\nincoming_count = incoming.count()\nif incoming_count == 0:\n    raise ValueError(\"CSV tidak memiliki baris data\")\nassert_unique_customer(incoming, \"CSV input\")\nuri = urlsplit(file_path)\nif signature(s3.head_object(Bucket=uri.netloc, Key=uri.path.lstrip(\"/\"))) != stable_signature:\n    raise RuntimeError(\"Object CSV berubah selama pembacaan\")\n\nlatest_date = find_latest_snapshot()\nif latest_date and latest_date > date_process:\n    raise ValueError(\"date_process tidak boleh lebih lama dari snapshot TXF terbaru\")\nif latest_date:\n    previous = spark.read.parquet(f\"{OUTPUT_PATH}date_process={latest_date}/\").select(\n        \"id\", \"customer_id\", \"address\", \"city\", \"province\", \"created_at\", \"load_timestamp\")\n    previous = (\n        previous\n        .withColumn(\"id\", F.col(\"id\").cast(\"bigint\"))\n        .withColumn(\"customer_id\", F.col(\"customer_id\").cast(\"bigint\"))\n    )\n    if previous.dtypes != incoming.dtypes:\n        raise ValueError(\"Tipe data output lama berbeda; migrasikan terlebih dahulu\")\n    assert_unique_customer(previous, \"TXF sebelumnya\")\n    merged = previous.alias(\"old\").join(\n        incoming.alias(\"new\"), F.col(\"old.customer_id\") == F.col(\"new.customer_id\"), \"full_outer\")\n    output_columns = [\n        F.when(F.col(\"old.customer_id\").isNotNull(), F.col(\"old.id\"))\n         .otherwise(F.col(\"new.id\")).alias(\"id\"),\n        F.coalesce(F.col(\"old.customer_id\"), F.col(\"new.customer_id\")).alias(\"customer_id\"),\n    ]\n    for name in [\"address\", \"city\", \"province\", \"created_at\", \"load_timestamp\"]:\n        output_columns.append(\n            F.when(F.col(\"new.customer_id\").isNotNull(), F.col(f\"new.{name}\"))\n             .otherwise(F.col(f\"old.{name}\")).alias(name))\n    txf_df = merged.select(*output_columns)\nelse:\n    txf_df = incoming\n\ntxf_df = txf_df.withColumn(\"date_process\", F.lit(date_process).cast(\"date\")).localCheckpoint(eager=True)\ntxf_count = txf_df.count()\nDyF = DynamicFrame.fromDF(txf_df, glueContext, \"txf_customer_address\")\nprint(f\"Input={incoming_count}; snapshot TXF={txf_count}; date_process={date_process}\")\nDyF.printSchema()\n# Preflight Catalog sebelum menghapus output partisi.\ntry:\n    existing = glue.get_table(DatabaseName=TARGET_DATABASE, Name=TARGET_TABLE)[\"Table\"]\nexcept glue.exceptions.EntityNotFoundException:\n    existing = None\n\nif existing:\n    if existing.get(\"Parameters\", {}).get(\"table_type\", \"\").upper() == \"ICEBERG\":\n        raise ValueError(\"Target harus external table Parquet biasa, bukan Iceberg\")\n    if existing[\"StorageDescriptor\"][\"Location\"].rstrip(\"/\") != OUTPUT_PATH.rstrip(\"/\"):\n        raise ValueError(\"Location target Catalog berbeda dari OUTPUT_PATH\")\n    if [(p[\"Name\"], p[\"Type\"]) for p in existing.get(\"PartitionKeys\", [])] != [(\"date_process\", \"date\")]:\n        raise ValueError(\"Target Catalog harus partition by date_process date\")\n    if existing.get(\"Parameters\", {}).get(\"useGlueParquetWriter\", \"\").lower() != \"true\":\n        raise ValueError(\"Tambahkan table property useGlueParquetWriter=true di Catalog target dahulu\")\n\ntry:\n    glue.get_database(Name=TARGET_DATABASE)\nexcept glue.exceptions.EntityNotFoundException:\n    glue.create_database(DatabaseInput={\"Name\": TARGET_DATABASE})\n\n# Hapus metadata partisi jika date_process yang sama sudah ada di Catalog.\nif existing:\n    spark.sql(\n        f\"ALTER TABLE `{TARGET_DATABASE}`.`{TARGET_TABLE}` \"\n        f\"DROP IF EXISTS PARTITION (date_process='{validate_date(date_process)}')\"\n    )\n\npartition_path = f\"{OUTPUT_PATH.rstrip('/')}/date_process={validate_date(date_process)}/\"\n# Path dibentuk dari prefix silver tetap + tanggal tervalidasi; tidak pernah memakai BASE_PATH.\nglueContext.purge_s3_path(partition_path, options={\"retentionPeriod\": 0})\n\ns3output = glueContext.getSink(\n    path=OUTPUT_PATH,\n    connection_type=\"s3\",\n    updateBehavior=\"UPDATE_IN_DATABASE\",\n    partitionKeys=[\"date_process\"],\n    compression=\"snappy\",\n    enableUpdateCatalog=True,\n    transformation_ctx=\"s3output\",\n)\ns3output.setCatalogInfo(\n    catalogDatabase=TARGET_DATABASE, catalogTableName=TARGET_TABLE\n)\ns3output.setFormat(\"glueparquet\")\ns3output.writeFrame(DyF)\njob.commit()\nprint(f\"SUCCESS: {incoming_count} input rows -> {txf_count} snapshot rows\")\nprint(f\"Catalog: {TARGET_DATABASE}.{TARGET_TABLE}; partition: {date_process}\")\njob.commit()",
+	"notebook": {
+		"metadata": {
+			"kernelspec": {
+				"display_name": "Glue PySpark",
+				"language": "python",
+				"name": "glue_pyspark"
+			},
+			"language_info": {
+				"codemirror_mode": {
+					"name": "python",
+					"version": 3
+				},
+				"file_extension": ".py",
+				"mimetype": "text/x-python",
+				"name": "Python_Glue_Session",
+				"pygments_lexer": "python3"
+			}
+		},
+		"nbformat_minor": 5,
+		"nbformat": 4,
+		"cells": [
+			{
+				"cell_type": "markdown",
+				"source": "# AWS Glue Studio Notebook",
+				"metadata": {
+					"editable": true,
+					"tags": []
+				},
+				"id": "aws-template-0"
+			},
+			{
+				"cell_type": "code",
+				"source": "%idle_timeout 10\n%glue_version 5.1\n%worker_type G.1X\n%number_of_workers 2\n\nimport sys\nfrom awsglue.transforms import *\nfrom awsglue.utils import getResolvedOptions\nfrom pyspark.context import SparkContext\nfrom awsglue.context import GlueContext\nfrom awsglue.job import Job\n  \nsc = SparkContext.getOrCreate()\nglueContext = GlueContext(sc)\nspark = glueContext.spark_session\njob = Job(glueContext)",
+				"metadata": {
+					"editable": true,
+					"tags": [],
+					"vscode": {
+						"languageId": "python_glue_session"
+					}
+				},
+				"execution_count": 4,
+				"outputs": [
+					{
+						"name": "stderr",
+						"output_type": "stream",
+						"text": "You are already connected to a glueetl session a8583b9c-3c1d-4f86-88f6-95660cde8ec3.\n\n\n\n\n\n\n\nNo change will be made to the current session that is set as glueetl. The session configuration change will apply to newly created sessions.\n"
+					},
+					{
+						"name": "stdout",
+						"output_type": "stream",
+						"text": "Current idle_timeout is 10 minutes.\n\n\n\nidle_timeout has been set to 10 minutes.\n"
+					},
+					{
+						"name": "stderr",
+						"output_type": "stream",
+						"text": "You are already connected to a glueetl session a8583b9c-3c1d-4f86-88f6-95660cde8ec3.\n\n\n\n\n\n\n\nNo change will be made to the current session that is set as glueetl. The session configuration change will apply to newly created sessions.\n"
+					},
+					{
+						"name": "stdout",
+						"output_type": "stream",
+						"text": "Setting Glue version to: 5.1\n"
+					},
+					{
+						"name": "stderr",
+						"output_type": "stream",
+						"text": "You are already connected to a glueetl session a8583b9c-3c1d-4f86-88f6-95660cde8ec3.\n\n\n\n\n\n\n\nNo change will be made to the current session that is set as glueetl. The session configuration change will apply to newly created sessions.\n"
+					},
+					{
+						"name": "stdout",
+						"output_type": "stream",
+						"text": "Previous worker type: G.1X\n\n\n\nSetting new worker type to: G.1X\n"
+					},
+					{
+						"name": "stderr",
+						"output_type": "stream",
+						"text": "You are already connected to a glueetl session a8583b9c-3c1d-4f86-88f6-95660cde8ec3.\n\n\n\n\n\n\n\nNo change will be made to the current session that is set as glueetl. The session configuration change will apply to newly created sessions.\n"
+					},
+					{
+						"name": "stdout",
+						"output_type": "stream",
+						"text": "Previous number of workers: 2\n\n\n\nSetting new number of workers to: 2\n\n\n\n\n"
+					}
+				],
+				"id": "aws-template-4"
+			},
+			{
+				"cell_type": "markdown",
+				"source": "## Bronze/Staging Layer (STG) + Silver/Transformation Layer (TXF) Customer Address\n\nLoads one bronze CSV by date, upserts it into the latest TXF snapshot, and writes Parquet to silver.\n\n- Bronze use `|@~` as CSV's delimiter and is read through the crawler table by custom delimiter (grok). Nothing is written back to bronze, the raw file stay as it is.\n- Upsert key is `customer_id`. Existing customers keep their id and get updated attributes. Customers not in the batch are kept.\n- A CSV with duplicate `customer_id` is rejected.\n- Each `date_process` partition is a full snapshot, so Athena queries must pick one.\n- Partition overwrite isn't atomic. Don't query or run two writers during a write, and restore the partition if a run fails after the purge.\n- Run `%stop_session` when done.\n",
+				"metadata": {},
+				"id": "flow"
+			},
+			{
+				"cell_type": "markdown",
+				"source": "### 1. Configuration\n\nSets which CSV to read and which partition to write.\n\n- `INPUT_DATE` defaults to yesterday (H-1, Jakarta time). Override it with `--input_date YYYY-MM-DD` or by setting it in the cell.\n- The file name is `customer_address_YYYYMMDD.csv`. The run fails if it's missing.\n- `--date_process` is optional and defaults to today (WIB). Never pass `None` or an empty value.\n- The role needs Catalog access, S3 read on bronze and silver, and write/delete on silver only.\n",
+				"metadata": {},
+				"id": "params-note"
+			},
+			{
+				"cell_type": "code",
+				"source": "# import time\nimport sys\nimport boto3\nfrom datetime import datetime, timezone, timedelta\nfrom zoneinfo import ZoneInfo\nfrom urllib.parse import urlsplit\nfrom botocore.config import Config\nfrom botocore.exceptions import ClientError\nfrom awsglue.dynamicframe import DynamicFrame\nfrom pyspark.sql import functions as F\nfrom pyspark.sql.types import StructType, StructField, StringType, TimestampType\n\nINPUT_DATE = None  # Otomatis H-1 WIB. Untuk manual, isi tanggal contohnya \"2026-03-26\".\nDATE_PROCESS = None  # None = tanggal proses saat ini di WIB.\nBASE_PATH = \"s3://s3-datalake-dev/bronze-stg/customer_address_csv/\"\nOUTPUT_PATH = \"s3://s3-datalake-dev/silver-txf/txf_customers_address/\"\nSOURCE_DATABASE = \"bronze_stg\"\nSOURCE_TABLE = \"customer_address_csv\"\nTARGET_DATABASE = \"silver_txf\"\nTARGET_TABLE = \"txf_customers_address\"\nCOLUMNS = [\"id\", \"customer_id\", \"address\", \"city\", \"province\", \"created_at\"]\n\nnames = [name for name in (\"JOB_NAME\", \"input_date\", \"date_process\")\n         if any(arg == f\"--{name}\" or arg.startswith(f\"--{name}=\") for arg in sys.argv)]\nargs = getResolvedOptions(sys.argv, names) if names else {}\nINPUT_DATE = args.get(\"input_date\", INPUT_DATE)\nDATE_PROCESS = args.get(\"date_process\", DATE_PROCESS)\njob.init(args.get(\"JOB_NAME\", \"nb_ingest_stg_customer_address\"), args)\n\nspark.conf.set(\"spark.sql.session.timeZone\", \"Asia/Jakarta\")\nspark.conf.set(\"spark.sql.shuffle.partitions\", \"4\")\nspark.conf.set(\"spark.sql.caseSensitive\", \"true\")\nconfig = Config(retries={\"mode\": \"standard\", \"total_max_attempts\": 1},\n                connect_timeout=5, read_timeout=10)\ns3 = boto3.client(\"s3\", config=config)\nglue = boto3.client(\"glue\", config=config)",
+				"metadata": {
+					"tags": [],
+					"vscode": {
+						"languageId": "python_glue_session"
+					}
+				},
+				"execution_count": null,
+				"outputs": [],
+				"id": "params"
+			},
+			{
+				"cell_type": "code",
+				"source": "def validate_date(value):\n    parsed = datetime.strptime(value, \"%Y-%m-%d\")\n    if parsed.strftime(\"%Y-%m-%d\") != value:\n        raise ValueError(\"Tanggal harus YYYY-MM-DD\")\n    return value\n\n\ndef get_file_path(ds):\n    filename = f\"customer_address_{validate_date(ds).replace('-', '')}.csv\"\n    return BASE_PATH.rstrip(\"/\") + \"/\" + filename\n\n\ndef signature(info):\n    return tuple(info.get(key) for key in\n                 (\"ContentLength\", \"ETag\", \"LastModified\", \"VersionId\"))\n\ndef assert_unique_customer(frame, label):\n    if frame.filter(F.col(\"customer_id\").isNull()\n                    | (F.trim(F.col(\"customer_id\")) == \"\")).limit(1).count():\n        raise ValueError(f\"{label}: customer_id null/kosong\")\n    if frame.groupBy(\"customer_id\").count().filter(F.col(\"count\") > 1).limit(1).count():\n        raise ValueError(f\"{label}: customer_id duplikat\")\n\n\ndef find_latest_snapshot():\n    uri = urlsplit(OUTPUT_PATH)\n    root = uri.path.lstrip(\"/\").rstrip(\"/\") + \"/\"\n    dates = []\n    for page in s3.get_paginator(\"list_objects_v2\").paginate(\n            Bucket=uri.netloc, Prefix=root, Delimiter=\"/\"):\n        if any(obj[\"Key\"].endswith(\".parquet\") for obj in page.get(\"Contents\", [])):\n            raise ValueError(\"Target masih memiliki Parquet tanpa partisi; migrasikan output lama dahulu\")\n        for item in page.get(\"CommonPrefixes\", []):\n            folder = item[\"Prefix\"][len(root):].rstrip(\"/\")\n            if not folder.startswith(\"date_process=\"):\n                raise ValueError(f\"Folder target tidak dikenal: {folder}\")\n            dates.append(validate_date(folder.split(\"=\", 1)[1]))\n    return max(dates) if dates else None",
+				"metadata": {
+					"tags": [],
+					"vscode": {
+						"languageId": "python_glue_session"
+					}
+				},
+				"execution_count": 6,
+				"outputs": [
+					{
+						"name": "stdout",
+						"output_type": "stream",
+						"text": "\n"
+					}
+				],
+				"id": "helpers"
+			},
+			{
+				"cell_type": "code",
+				"source": "run_date = datetime.now(ZoneInfo(\"Asia/Jakarta\")).date()\ntoday = run_date.isoformat()\nyesterday = (run_date - timedelta(days=1)).isoformat()\n# Prioritas: --input_date dari job, INPUT_DATE manual di cell, lalu H-1 WIB.\ninput_date = validate_date(yesterday if INPUT_DATE is None else INPUT_DATE)\n\ndate_process = validate_date(DATE_PROCESS or today)\nfile_path = get_file_path(input_date)\nprint(f\"Source: {file_path}\")\nprint(f\"Output: {OUTPUT_PATH}date_process={date_process}/\")\n\nuri = urlsplit(file_path)\n\ntry:\n    file_info = s3.head_object(\n        Bucket=uri.netloc,\n        Key=uri.path.lstrip(\"/\")\n    )\nexcept ClientError as error:\n    if (\n        error.operation_name == \"HeadObject\"\n        and error.response[\"Error\"][\"Code\"]\n        in (\"404\", \"NoSuchKey\", \"NotFound\")\n    ):\n        raise FileNotFoundError(\n            f\"File tidak ditemukan: {file_path}\"\n        ) from error\n    raise\n\nif file_info[\"ContentLength\"] == 0:\n    raise ValueError(\"File CSV kosong\")\n\nstable_signature = signature(file_info)",
+				"metadata": {
+					"tags": [],
+					"vscode": {
+						"languageId": "python_glue_session"
+					}
+				},
+				"execution_count": null,
+				"outputs": [],
+				"id": "choose-file"
+			},
+			{
+				"cell_type": "markdown",
+				"source": "### 2. Read the bronze file\n\nReads only the target CSV, using the crawler schema.\n",
+				"metadata": {},
+				"id": "read-note"
+			},
+			{
+				"cell_type": "code",
+				"source": "table = glue.get_table(DatabaseName=SOURCE_DATABASE, Name=SOURCE_TABLE)[\"Table\"]\ndescriptor = table[\"StorageDescriptor\"]\nif descriptor[\"Location\"].rstrip(\"/\") != BASE_PATH.rstrip(\"/\"):\n    raise ValueError(\"Location tabel source berbeda dari BASE_PATH; periksa konfigurasi\")\ncolumns = descriptor[\"Columns\"]\nif [c[\"Name\"] for c in columns] != COLUMNS or any(c[\"Type\"] != \"string\" for c in columns):\n    raise ValueError(\"Schema source harus enam kolom string sesuai header CSV\")\n\nsource_schema = StructType([StructField(c[\"Name\"], StringType(), True) for c in columns])\nsource_df = (spark.read.schema(source_schema)\n             .option(\"header\", \"true\")\n             .option(\"sep\", \"|@~\")\n             .option(\"enforceSchema\", \"false\")\n             .option(\"mode\", \"FAILFAST\")\n             .csv(file_path))\ndyf = DynamicFrame.fromDF(source_df, glueContext, \"src_customer_address\")\ndyf.printSchema()",
+				"metadata": {
+					"tags": [],
+					"vscode": {
+						"languageId": "python_glue_session"
+					}
+				},
+				"execution_count": 8,
+				"outputs": [
+					{
+						"name": "stdout",
+						"output_type": "stream",
+						"text": "root\n\n\n\n|-- id: string\n\n\n\n|-- customer_id: string\n\n\n\n|-- address: string\n\n\n\n|-- city: string\n\n\n\n|-- province: string\n\n\n\n|-- created_at: string\n"
+					}
+				],
+				"id": "read-source"
+			},
+			{
+				"cell_type": "markdown",
+				"source": "### 3. Convert types and merge\n\nCasts the columns and merges the batch into the latest Silver/TXF table snapshot.\n\n- Running an older date later makes attributes follow the last batch run.\n- `localCheckpoint` holds the result on the workers before the partition is replaced. It is not a backup.\n",
+				"metadata": {},
+				"id": "transform-note"
+			},
+			{
+				"cell_type": "code",
+				"source": "df = dyf.toDF()\nconverted = df.withColumn(\"_created_at\", F.expr(\"try_cast(created_at AS timestamp)\"))\ninvalid_timestamp = (F.col(\"created_at\").isNotNull()\n                     & (F.trim(F.col(\"created_at\")) != \"\")\n                     & F.col(\"_created_at\").isNull())\nif converted.filter(invalid_timestamp).limit(1).count():\n    raise ValueError(\"Ada created_at yang tidak dapat dikonversi menjadi timestamp\")\n\nincoming = converted.select(\n    F.col(\"id\").cast(\"bigint\").alias(\"id\"),\n    F.col(\"customer_id\").cast(\"bigint\").alias(\"customer_id\"),\n    F.col(\"address\").cast(\"string\").alias(\"address\"),\n    F.col(\"city\").cast(\"string\").alias(\"city\"),\n    F.col(\"province\").cast(\"string\").alias(\"province\"),\n    F.date_trunc(\n        \"millisecond\", F.col(\"_created_at\")\n    ).alias(\"created_at\"),\n    F.lit(datetime.now(timezone.utc))\n     .cast(\"timestamp\")\n     .alias(\"load_timestamp\"),\n).localCheckpoint(eager=True)\n\nincoming_count = incoming.count()\nif incoming_count == 0:\n    raise ValueError(\"CSV tidak memiliki baris data\")\nassert_unique_customer(incoming, \"CSV input\")\nuri = urlsplit(file_path)\nif signature(s3.head_object(Bucket=uri.netloc, Key=uri.path.lstrip(\"/\"))) != stable_signature:\n    raise RuntimeError(\"Object CSV berubah selama pembacaan\")\n\nlatest_date = find_latest_snapshot()\nif latest_date and latest_date > date_process:\n    raise ValueError(\"date_process tidak boleh lebih lama dari snapshot TXF terbaru\")\nif latest_date:\n    previous = spark.read.parquet(f\"{OUTPUT_PATH}date_process={latest_date}/\").select(\n        \"id\", \"customer_id\", \"address\", \"city\", \"province\", \"created_at\", \"load_timestamp\")\n    previous = (\n        previous\n        .withColumn(\"id\", F.col(\"id\").cast(\"bigint\"))\n        .withColumn(\"customer_id\", F.col(\"customer_id\").cast(\"bigint\"))\n    )\n    if previous.dtypes != incoming.dtypes:\n        raise ValueError(\"Tipe data output lama berbeda; migrasikan terlebih dahulu\")\n    assert_unique_customer(previous, \"TXF sebelumnya\")\n    merged = previous.alias(\"old\").join(\n        incoming.alias(\"new\"), F.col(\"old.customer_id\") == F.col(\"new.customer_id\"), \"full_outer\")\n    output_columns = [\n        F.when(F.col(\"old.customer_id\").isNotNull(), F.col(\"old.id\"))\n         .otherwise(F.col(\"new.id\")).alias(\"id\"),\n        F.coalesce(F.col(\"old.customer_id\"), F.col(\"new.customer_id\")).alias(\"customer_id\"),\n    ]\n    for name in [\"address\", \"city\", \"province\", \"created_at\", \"load_timestamp\"]:\n        output_columns.append(\n            F.when(F.col(\"new.customer_id\").isNotNull(), F.col(f\"new.{name}\"))\n             .otherwise(F.col(f\"old.{name}\")).alias(name))\n    txf_df = merged.select(*output_columns)\nelse:\n    txf_df = incoming\n\ntxf_df = txf_df.withColumn(\"date_process\", F.lit(date_process).cast(\"date\")).localCheckpoint(eager=True)\ntxf_count = txf_df.count()\nDyF = DynamicFrame.fromDF(txf_df, glueContext, \"txf_customer_address\")\nprint(f\"Input={incoming_count}; snapshot TXF={txf_count}; date_process={date_process}\")\nDyF.printSchema()",
+				"metadata": {
+					"tags": [],
+					"vscode": {
+						"languageId": "python_glue_session"
+					}
+				},
+				"execution_count": null,
+				"outputs": [
+					{
+						"name": "stdout",
+						"output_type": "stream",
+						"text": "Input=1000; snapshot TXF=1000; date_process=2026-10-13\n\n\n\nroot\n\n\n\n|-- id: string\n\n\n\n|-- customer_id: string\n\n\n\n|-- address: string\n\n\n\n|-- city: string\n\n\n\n|-- province: string\n\n\n\n|-- created_at: timestamp\n\n\n\n|-- load_timestamp: timestamp\n\n\n\n|-- date_process: string\n"
+					}
+				],
+				"id": "transform"
+			},
+			{
+				"cell_type": "markdown",
+				"source": "### 4. Write to silver/txf layer\n\nWrites the snapshot to the `date_process` partition and updates the Catalog.\n\n- A rerun replaces only that partition.\n- The notebook stops if the target table's partition, schema or location doesn't match.\n",
+				"metadata": {},
+				"id": "write-note"
+			},
+			{
+				"cell_type": "code",
+				"source": "# Preflight Catalog sebelum menghapus output partisi.\ntry:\n    existing = glue.get_table(DatabaseName=TARGET_DATABASE, Name=TARGET_TABLE)[\"Table\"]\nexcept glue.exceptions.EntityNotFoundException:\n    existing = None\n\nif existing:\n    if existing.get(\"Parameters\", {}).get(\"table_type\", \"\").upper() == \"ICEBERG\":\n        raise ValueError(\"Target harus external table Parquet biasa, bukan Iceberg\")\n    if existing[\"StorageDescriptor\"][\"Location\"].rstrip(\"/\") != OUTPUT_PATH.rstrip(\"/\"):\n        raise ValueError(\"Location target Catalog berbeda dari OUTPUT_PATH\")\n    if [(p[\"Name\"], p[\"Type\"]) for p in existing.get(\"PartitionKeys\", [])] != [(\"date_process\", \"date\")]:\n        raise ValueError(\"Target Catalog harus partition by date_process date\")\n    if existing.get(\"Parameters\", {}).get(\"useGlueParquetWriter\", \"\").lower() != \"true\":\n        raise ValueError(\"Tambahkan table property useGlueParquetWriter=true di Catalog target dahulu\")\n\ntry:\n    glue.get_database(Name=TARGET_DATABASE)\nexcept glue.exceptions.EntityNotFoundException:\n    glue.create_database(DatabaseInput={\"Name\": TARGET_DATABASE})\n\n# Hapus metadata partisi jika date_process yang sama sudah ada di Catalog.\nif existing:\n    spark.sql(\n        f\"ALTER TABLE `{TARGET_DATABASE}`.`{TARGET_TABLE}` \"\n        f\"DROP IF EXISTS PARTITION (date_process='{validate_date(date_process)}')\"\n    )\n\npartition_path = f\"{OUTPUT_PATH.rstrip('/')}/date_process={validate_date(date_process)}/\"\n# Path dibentuk dari prefix silver tetap + tanggal tervalidasi; tidak pernah memakai BASE_PATH.\nglueContext.purge_s3_path(partition_path, options={\"retentionPeriod\": 0})\n\ns3output = glueContext.getSink(\n    path=OUTPUT_PATH,\n    connection_type=\"s3\",\n    updateBehavior=\"UPDATE_IN_DATABASE\",\n    partitionKeys=[\"date_process\"],\n    compression=\"snappy\",\n    enableUpdateCatalog=True,\n    transformation_ctx=\"s3output\",\n)\ns3output.setCatalogInfo(\n    catalogDatabase=TARGET_DATABASE, catalogTableName=TARGET_TABLE\n)\ns3output.setFormat(\"glueparquet\")\ns3output.writeFrame(DyF)\njob.commit()\nprint(f\"SUCCESS: {incoming_count} input rows -> {txf_count} snapshot rows\")\nprint(f\"Catalog: {TARGET_DATABASE}.{TARGET_TABLE}; partition: {date_process}\")",
+				"metadata": {
+					"tags": [],
+					"vscode": {
+						"languageId": "python_glue_session"
+					}
+				},
+				"execution_count": 12,
+				"outputs": [
+					{
+						"name": "stdout",
+						"output_type": "stream",
+						"text": "SUCCESS: 1000 input rows -> 1000 snapshot rows\n\n\n\nCatalog: silver_txf.txf_customers_address; partition: 2026-10-13\n"
+					}
+				],
+				"id": "write-silver"
+			},
+			{
+				"cell_type": "markdown",
+				"source": "### 5. Check in Athena\n\nQuery one `date_process` partition, using the date printed by the notebook.\n\n```sql\nSELECT id, customer_id, address, city, province, created_at, load_timestamp\nFROM silver_txf.txf_customers_address\nWHERE date_process = DATE 'yyyy-MM-dd'\nLIMIT 20;\n```\n\n- Don't sum partitions. Each one is a full snapshot.\n",
+				"metadata": {},
+				"id": "query-note"
+			},
+			{
+				"cell_type": "markdown",
+				"source": "### 6. Stop the session\n\nRun this even if the job fails. Set Job retries to 0 and don't add a Retry in Step Functions.\n",
+				"metadata": {},
+				"id": "stop-note"
+			},
+			{
+				"cell_type": "code",
+				"source": "%stop_session",
+				"metadata": {
+					"tags": [],
+					"vscode": {
+						"languageId": "python_glue_session"
+					}
+				},
+				"execution_count": 11,
+				"outputs": [
+					{
+						"name": "stdout",
+						"output_type": "stream",
+						"text": "Stopping session: a8583b9c-3c1d-4f86-88f6-95660cde8ec3\n\n\n\nStopped session.\n"
+					}
+				],
+				"id": "stop-session"
+			}
+		]
+	}
+}
