@@ -1,0 +1,40 @@
+{
+  "name" : "ingest_mart_sales",
+  "jobMode" : "VISUAL",
+  "description" : "",
+  "role" : "arn:aws:iam::127225912918:role/AWSGlueServiceRole",
+  "executionProperty" : {
+    "maxConcurrentRuns" : 1
+  },
+  "command" : {
+    "name" : "glueetl",
+    "scriptLocation" : "s3://aws-glue-assets-127225912918-ap-southeast-2/scripts/ingest_mart_sales.py",
+    "pythonVersion" : "3"
+  },
+  "defaultArguments" : {
+    "--enable-spark-ui" : "true",
+    "--extra-py-files" : "s3://aws-glue-studio-transforms-234881715811-prod-ap-southeast-2/gs_common.py,s3://aws-glue-studio-transforms-234881715811-prod-ap-southeast-2/gs_derived.py",
+    "--spark-event-logs-path" : "s3://aws-glue-assets-127225912918-ap-southeast-2/sparkHistoryLogs/",
+    "--enable-job-insights" : "true",
+    "--conf" : "spark.eventLog.rolling.enabled=true --conf spark.sql.catalog.glue_catalog.glue.skip-name-validation=true",
+    "--enable-glue-datacatalog" : "",
+    "--job-bookmark-option" : "job-bookmark-disable",
+    "--job-language" : "python",
+    "--TempDir" : "s3://aws-glue-assets-127225912918-ap-southeast-2/temporary/"
+  },
+  "maxRetries" : 0,
+  "allocatedCapacity" : 10,
+  "timeout" : 480,
+  "maxCapacity" : 10.0,
+  "glueVersion" : "5.1",
+  "numberOfWorkers" : 10,
+  "workerType" : "G.1X",
+  "executionClass" : "STANDARD",
+  "codeGenConfigurationNodes" : "{\"node-1792239494854\":{\"CatalogSource\":{\"Database\":\"silver_txf\",\"Name\":\"src_sales\",\"PartitionPredicate\":\"\",\"Table\":\"txf_sales\"}},\"node-1792241417797\":{\"DynamicTransform\":{\"FunctionName\":\"gs_derived\",\"Inputs\":[\"node-1792242881494\"],\"Name\":\"add_load_timestamp\",\"OutputSchemas\":[{\"Columns\":[{\"Name\":\"periode\",\"Type\":\"string\"},{\"Name\":\"class\",\"Type\":\"string\"},{\"Name\":\"model\",\"Type\":\"string\"},{\"Name\":\"total\",\"Type\":\"decimal(10,2)\"},{\"Name\":\"load_timestamp\",\"Type\":\"timestamp\"}]}],\"Parameters\":[{\"IsOptional\":false,\"Name\":\"colName\",\"Type\":\"str\",\"Value\":[\"load_timestamp\"]},{\"IsOptional\":false,\"Name\":\"expr\",\"Type\":\"str\",\"Value\":[\"current_timestamp()\"]}],\"Path\":\"s3://aws-glue-studio-transforms-234881715811-prod-ap-southeast-2/gs_derived.py\",\"TransformName\":\"gs_derived\",\"Version\":\"1.0.0\"}},\"node-1792240708464\":{\"Aggregate\":{\"Aggs\":[{\"AggFunc\":\"sum\",\"Column\":[\"price\"]}],\"Groups\":[[\"periode\"],[\"class\"],[\"model\"]],\"Inputs\":[\"node-1792240320216\"],\"Name\":\"aggregate_sales\"}},\"node-1792241694335\":{\"CustomCode\":{\"ClassName\":\"MyTransform\",\"Code\":\"import sys\\nfrom awsglue.utils import getResolvedOptions\\nfrom awsglue.dynamicframe import DynamicFrameCollection\\nfrom pyspark.sql.functions import col\\nfrom pyspark.sql.types import DecimalType\\nfrom awsglue.dynamicframe import DynamicFrame\\n\\n\\nif not getResolvedOptions(sys.argv, []).get(\\\"JOB_RUN_ID\\\"):\\n    raise ValueError(\\\"Gunakan Run job, bukan Data preview.\\\")\\n\\nframe = dfc.select(list(dfc.keys())[0])\\n\\nif frame.count() == 0:\\n    raise ValueError(\\\"Hasil kosong; output lama tidak dihapus.\\\")\\n\\nglueContext.purge_s3_path(\\n    \\\"s3://s3-datalake-dev/gold-mart/mart_sales/\\\",\\n    options={\\\"retentionPeriod\\\": 0}\\n)\\n\\n# Cast kolom total ke decimal(38,5) sebelum ditulis ke S3\\ndf = frame.toDF()\\ndf = df.withColumn(\\\"total\\\", col(\\\"total\\\").cast(DecimalType(38, 5)))\\nframe = DynamicFrame.fromDF(df, glueContext, \\\"result\\\")\\n\\nreturn DynamicFrameCollection({\\\"result\\\": frame}, glueContext)\",\"Inputs\":[\"node-1792241417797\"],\"Name\":\"truncate\",\"OutputSchemas\":[{\"Columns\":[{\"Name\":\"periode\",\"Type\":\"string\"},{\"Name\":\"class\",\"Type\":\"string\"},{\"Name\":\"model\",\"Type\":\"string\"},{\"Name\":\"total\",\"Type\":\"decimal(10,2)\"},{\"Name\":\"load_timestamp\",\"Type\":\"timestamp\"}]}]}},\"node-1792241935513\":{\"S3GlueParquetTarget\":{\"AutoDataQuality\":{\"EvaluationContext\":\"EvaluateDataQuality_node1792225536508\",\"IsEnabled\":true},\"Compression\":\"snappy\",\"Inputs\":[\"node-1792241891654\"],\"Name\":\"out_mart_sales\",\"NumberTargetPartitions\":\"0\",\"PartitionKeys\":[],\"Path\":\"s3://s3-datalake-dev/gold-mart/mart_sales/\",\"SchemaChangePolicy\":{\"Database\":\"gold_mart\",\"EnableUpdateCatalog\":false,\"Table\":\"mart_sales\",\"UpdateBehavior\":\"UPDATE_IN_DATABASE\"}}},\"node-1792242881494\":{\"RenameField\":{\"Inputs\":[\"node-1792240708464\"],\"Name\":\"Rename Field\",\"SourcePath\":[\"sum(price)\"],\"TargetPath\":[\"total\"]}},\"node-1792241891654\":{\"SelectFromCollection\":{\"Index\":0,\"Inputs\":[\"node-1792241694335\"],\"Name\":\"select_mart\"}},\"node-1792240234749\":{\"DynamicTransform\":{\"FunctionName\":\"gs_derived\",\"Inputs\":[\"node-1792239494854\"],\"Name\":\"add_periode\",\"OutputSchemas\":[{\"Columns\":[{\"Name\":\"vin\",\"Type\":\"string\"},{\"Name\":\"customer_id\",\"Type\":\"bigint\"},{\"Name\":\"model\",\"Type\":\"string\"},{\"Name\":\"invoice_date\",\"Type\":\"date\"},{\"Name\":\"price\",\"Type\":\"decimal(10,2)\"},{\"Name\":\"created_at\",\"Type\":\"timestamp\"},{\"Name\":\"load_timestamp\",\"Type\":\"timestamp\"},{\"Name\":\"tran_date\",\"Type\":\"string\"},{\"Name\":\"periode\",\"Type\":\"string\"}]}],\"Parameters\":[{\"IsOptional\":false,\"Name\":\"colName\",\"Type\":\"str\",\"Value\":[\"periode\"]},{\"IsOptional\":false,\"Name\":\"expr\",\"Type\":\"str\",\"Value\":[\"date_format(invoice_date, 'yyyy-MM')\"]}],\"Path\":\"s3://aws-glue-studio-transforms-234881715811-prod-ap-southeast-2/gs_derived.py\",\"TransformName\":\"gs_derived\",\"Version\":\"1.0.0\"}},\"node-1792240320216\":{\"DynamicTransform\":{\"FunctionName\":\"gs_derived\",\"Inputs\":[\"node-1792240234749\"],\"Name\":\"add_class\",\"OutputSchemas\":[{\"Columns\":[{\"Name\":\"vin\",\"Type\":\"string\"},{\"Name\":\"customer_id\",\"Type\":\"bigint\"},{\"Name\":\"model\",\"Type\":\"string\"},{\"Name\":\"invoice_date\",\"Type\":\"date\"},{\"Name\":\"price\",\"Type\":\"decimal(10,2)\"},{\"Name\":\"created_at\",\"Type\":\"timestamp\"},{\"Name\":\"load_timestamp\",\"Type\":\"timestamp\"},{\"Name\":\"tran_date\",\"Type\":\"string\"},{\"Name\":\"periode\",\"Type\":\"string\"},{\"Name\":\"class\",\"Type\":\"string\"}]}],\"Parameters\":[{\"IsOptional\":false,\"Name\":\"colName\",\"Type\":\"str\",\"Value\":[\"class\"]},{\"IsOptional\":false,\"Name\":\"expr\",\"Type\":\"str\",\"Value\":[\"case  \\t\\twhen price between 100000000 and 250000000 then 'LOW' \\t\\twhen price between 250000001 and 400000000 then 'MEDIUM' \\t\\twhen price > 400000000 then 'HIGH' \\t\\telse CAST(null as STRING) \\tend\"]}],\"Path\":\"s3://aws-glue-studio-transforms-234881715811-prod-ap-southeast-2/gs_derived.py\",\"TransformName\":\"gs_derived\",\"Version\":\"1.0.0\"}}}",
+  "sourceControlDetails" : {
+    "provider" : "GITHUB",
+    "repository" : "AWS-End-to-End-Data-Pipeline",
+    "branch" : "main",
+    "folder" : "glue/job"
+  }
+}
