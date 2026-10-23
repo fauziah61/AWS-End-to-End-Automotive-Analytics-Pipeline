@@ -1,0 +1,17 @@
+{
+    "Region":  "ap-southeast-2",
+    "GlueJobs":  8,
+    "VisualJobs":  5,
+    "NotebookJobs":  2,
+    "ScriptJobs":  1,
+    "NotebookFiles":  3,
+    "CatalogTables":  12,
+    "CloudFormationResources":  64,
+    "StateMachines":  2,
+    "S3FilesDownloaded":  259,
+    "S3FolderMarkers":  14,
+    "S3TotalBytes":  29141187,
+    "RdsDumpAvailable":  false,
+    "DeployedOrRestored":  false,
+    "GithubPushPerformed":  false
+}

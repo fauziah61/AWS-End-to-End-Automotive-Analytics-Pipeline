@@ -1,0 +1,225 @@
+[
+    {
+        "ResourceType":  "AWS::SNS::Subscription",
+        "LogicalResourceId":  "SNSSubscriptionDatapipelinefailure0efef1746221478298013e7b7fd07c4e",
+        "WarningType":  "UNSUPPORTED_PROPERTIES",
+        "PropertyPaths":  [
+                              "Region"
+                          ]
+    },
+    {
+        "ResourceType":  "AWS::StepFunctions::StateMachine",
+        "LogicalResourceId":  "StepFunctionsStateMachineStateMachinesfingestgoldmart",
+        "WarningType":  "UNSUPPORTED_PROPERTIES",
+        "PropertyPaths":  [
+                              "DefinitionS3Location/Bucket",
+                              "DefinitionS3Location/Version",
+                              "DefinitionS3Location/Key"
+                          ]
+    },
+    {
+        "ResourceType":  "AWS::StepFunctions::StateMachine",
+        "LogicalResourceId":  "StepFunctionsStateMachineStateMachinesfingestsilver",
+        "WarningType":  "UNSUPPORTED_PROPERTIES",
+        "PropertyPaths":  [
+                              "DefinitionS3Location/Bucket",
+                              "DefinitionS3Location/Version",
+                              "DefinitionS3Location/Key"
+                          ]
+    },
+    {
+        "ResourceType":  "AWS::S3::Bucket",
+        "LogicalResourceId":  "S3BucketAwsglueassets<AWS_ACCOUNT_ID>apsoutheast2",
+        "WarningType":  "UNSUPPORTED_PROPERTIES",
+        "PropertyPaths":  [
+                              "LifecycleConfiguration/Rules/*/ExpiredObjectDeleteMarker",
+                              "MetadataConfiguration/InventoryTableConfiguration/EncryptionConfiguration/SseAlgorithm",
+                              "LifecycleConfiguration/Rules/*/NoncurrentVersionTransition/StorageClass",
+                              "MetadataConfiguration/AnnotationTableConfiguration/EncryptionConfiguration/KmsKeyArn",
+                              "LifecycleConfiguration/Rules/*/NoncurrentVersionExpirationInDays",
+                              "LifecycleConfiguration/Rules/*/Transition/TransitionInDays",
+                              "LifecycleConfiguration/Rules/*/NoncurrentVersionTransition/TransitionInDays",
+                              "ReplicationConfiguration/Rules/*/Prefix",
+                              "MetadataConfiguration/JournalTableConfiguration/EncryptionConfiguration/SseAlgorithm",
+                              "LifecycleConfiguration/Rules/*/NoncurrentVersionTransition/NewerNoncurrentVersions",
+                              "MetadataConfiguration/InventoryTableConfiguration/EncryptionConfiguration/KmsKeyArn",
+                              "LifecycleConfiguration/Rules/*/Transition/TransitionDate",
+                              "MetadataConfiguration/AnnotationTableConfiguration/EncryptionConfiguration/SseAlgorithm",
+                              "AccessControl",
+                              "LifecycleConfiguration/Rules/*/Transition/StorageClass",
+                              "MetadataConfiguration/JournalTableConfiguration/EncryptionConfiguration/KmsKeyArn"
+                          ]
+    },
+    {
+        "ResourceType":  "AWS::S3::Bucket",
+        "LogicalResourceId":  "S3BucketS3datalakedev",
+        "WarningType":  "UNSUPPORTED_PROPERTIES",
+        "PropertyPaths":  [
+                              "LifecycleConfiguration/Rules/*/ExpiredObjectDeleteMarker",
+                              "MetadataConfiguration/InventoryTableConfiguration/EncryptionConfiguration/SseAlgorithm",
+                              "LifecycleConfiguration/Rules/*/NoncurrentVersionTransition/StorageClass",
+                              "MetadataConfiguration/AnnotationTableConfiguration/EncryptionConfiguration/KmsKeyArn",
+                              "LifecycleConfiguration/Rules/*/NoncurrentVersionExpirationInDays",
+                              "LifecycleConfiguration/Rules/*/Transition/TransitionInDays",
+                              "LifecycleConfiguration/Rules/*/NoncurrentVersionTransition/TransitionInDays",
+                              "ReplicationConfiguration/Rules/*/Prefix",
+                              "MetadataConfiguration/JournalTableConfiguration/EncryptionConfiguration/SseAlgorithm",
+                              "LifecycleConfiguration/Rules/*/NoncurrentVersionTransition/NewerNoncurrentVersions",
+                              "MetadataConfiguration/InventoryTableConfiguration/EncryptionConfiguration/KmsKeyArn",
+                              "LifecycleConfiguration/Rules/*/Transition/TransitionDate",
+                              "MetadataConfiguration/AnnotationTableConfiguration/EncryptionConfiguration/SseAlgorithm",
+                              "AccessControl",
+                              "LifecycleConfiguration/Rules/*/Transition/StorageClass",
+                              "MetadataConfiguration/JournalTableConfiguration/EncryptionConfiguration/KmsKeyArn"
+                          ]
+    },
+    {
+        "ResourceType":  "AWS::RDS::DBInstance",
+        "LogicalResourceId":  "RDSDBInstance",
+        "WarningType":  "UNSUPPORTED_PROPERTIES",
+        "PropertyPaths":  [
+                              "AutomaticBackupReplicationKmsKeyId",
+                              "MasterUserAuthenticationType",
+                              "SourceDBInstanceAutomatedBackupsArn",
+                              "CertificateRotationRestart",
+                              "ApplyImmediately",
+                              "SourceDbiResourceId",
+                              "MasterUserPassword",
+                              "TdeCredentialPassword",
+                              "DeleteAutomatedBackups",
+                              "UseDefaultProcessorFeatures",
+                              "RestoreTime",
+                              "DBSnapshotIdentifier",
+                              "AllowMajorVersionUpgrade",
+                              "SourceDBInstanceIdentifier",
+                              "UseLatestRestorableTime"
+                          ]
+    },
+    {
+        "ResourceType":  "AWS::SecretsManager::Secret",
+        "LogicalResourceId":  "SecretsManagerSecret",
+        "WarningType":  "UNSUPPORTED_PROPERTIES",
+        "PropertyPaths":  [
+                              "GenerateSecretString/ExcludePunctuation",
+                              "GenerateSecretString/SecretStringTemplate",
+                              "GenerateSecretString/ExcludeCharacters",
+                              "GenerateSecretString/RequireEachIncludedType",
+                              "SecretString",
+                              "GenerateSecretString/GenerateStringKey",
+                              "GenerateSecretString/ExcludeLowercase",
+                              "GenerateSecretString/ExcludeUppercase",
+                              "GenerateSecretString/IncludeSpace",
+                              "GenerateSecretString/PasswordLength",
+                              "GenerateSecretString/ExcludeNumbers"
+                          ]
+    },
+    {
+        "ResourceType":  "AWS::EC2::SecurityGroup",
+        "LogicalResourceId":  "EC2SecurityGroup",
+        "WarningType":  "UNSUPPORTED_PROPERTIES",
+        "PropertyPaths":  [
+                              "SecurityGroupIngress/*/SourceSecurityGroupName"
+                          ]
+    },
+    {
+        "ResourceType":  "AWS::EC2::SecurityGroup",
+        "LogicalResourceId":  "EC2SecurityGroupOE",
+        "WarningType":  "UNSUPPORTED_PROPERTIES",
+        "PropertyPaths":  [
+                              "SecurityGroupIngress/*/SourceSecurityGroupName"
+                          ]
+    },
+    {
+        "ResourceType":  "AWS::EC2::SecurityGroup",
+        "LogicalResourceId":  "EC2SecurityGroupPA",
+        "WarningType":  "UNSUPPORTED_PROPERTIES",
+        "PropertyPaths":  [
+                              "SecurityGroupIngress/*/SourceSecurityGroupName"
+                          ]
+    },
+    {
+        "ResourceType":  "AWS::Athena::WorkGroup",
+        "LogicalResourceId":  "AthenaWorkGroupPrimary",
+        "WarningType":  "UNSUPPORTED_PROPERTIES",
+        "PropertyPaths":  [
+                              "WorkGroupConfigurationUpdates/ResultConfigurationUpdates/RemoveEncryptionConfiguration",
+                              "WorkGroupConfigurationUpdates/EngineConfiguration/MaxConcurrentDpus",
+                              "WorkGroupConfigurationUpdates/ManagedQueryResultsConfiguration/EncryptionConfiguration/KmsKey",
+                              "WorkGroupConfigurationUpdates/PublishCloudWatchMetricsEnabled",
+                              "WorkGroupConfigurationUpdates/EngineConfiguration/DefaultExecutorDpuSize",
+                              "WorkGroupConfigurationUpdates/MonitoringConfiguration/S3LoggingConfiguration/LogLocation",
+                              "WorkGroupConfiguration/AdditionalConfiguration",
+                              "WorkGroupConfigurationUpdates/EngineVersion/SelectedEngineVersion",
+                              "WorkGroupConfigurationUpdates/MonitoringConfiguration/ManagedLoggingConfiguration/KmsKey",
+                              "WorkGroupConfigurationUpdates/ResultConfigurationUpdates/EncryptionConfiguration/KmsKey",
+                              "WorkGroupConfigurationUpdates/EngineConfiguration/Classifications",
+                              "WorkGroupConfigurationUpdates/MonitoringConfiguration/CloudWatchLoggingConfiguration/LogGroup",
+                              "WorkGroupConfiguration/EngineConfiguration/CoordinatorDpuSize",
+                              "RecursiveDeleteOption",
+                              "WorkGroupConfigurationUpdates/MonitoringConfiguration/CloudWatchLoggingConfiguration/LogStreamNamePrefix",
+                              "WorkGroupConfiguration/EngineConfiguration/MaxConcurrentDpus",
+                              "WorkGroupConfigurationUpdates/BytesScannedCutoffPerQuery",
+                              "WorkGroupConfigurationUpdates/ResultConfigurationUpdates/OutputLocation",
+                              "WorkGroupConfiguration/EngineConfiguration/DefaultExecutorDpuSize",
+                              "WorkGroupConfigurationUpdates/RemoveCustomerContentEncryptionConfiguration",
+                              "WorkGroupConfigurationUpdates/ManagedQueryResultsConfiguration/Enabled",
+                              "WorkGroupConfigurationUpdates/RemoveBytesScannedCutoffPerQuery",
+                              "WorkGroupConfigurationUpdates/ResultConfigurationUpdates/RemoveOutputLocation",
+                              "WorkGroupConfigurationUpdates/EngineVersion/EffectiveEngineVersion",
+                              "WorkGroupConfigurationUpdates/ResultConfigurationUpdates/ExpectedBucketOwner",
+                              "WorkGroupConfigurationUpdates/MonitoringConfiguration/S3LoggingConfiguration/KmsKey",
+                              "WorkGroupConfigurationUpdates/ResultConfigurationUpdates/AclConfiguration/S3AclOption",
+                              "WorkGroupConfigurationUpdates/MonitoringConfiguration/CloudWatchLoggingConfiguration/Enabled",
+                              "WorkGroupConfigurationUpdates/EngineConfiguration/CoordinatorDpuSize",
+                              "WorkGroupConfigurationUpdates/ResultConfigurationUpdates/EncryptionConfiguration/EncryptionOption",
+                              "WorkGroupConfigurationUpdates/CustomerContentEncryptionConfiguration/KmsKey",
+                              "WorkGroupConfigurationUpdates/AdditionalConfiguration",
+                              "WorkGroupConfigurationUpdates/ResultConfigurationUpdates/RemoveExpectedBucketOwner",
+                              "WorkGroupConfigurationUpdates/ExecutionRole",
+                              "WorkGroupConfigurationUpdates/EnforceWorkGroupConfiguration",
+                              "WorkGroupConfigurationUpdates/MonitoringConfiguration/S3LoggingConfiguration/Enabled",
+                              "WorkGroupConfigurationUpdates/ResultConfigurationUpdates/RemoveAclConfiguration",
+                              "WorkGroupConfigurationUpdates/RequesterPaysEnabled",
+                              "WorkGroupConfigurationUpdates/MonitoringConfiguration/ManagedLoggingConfiguration/Enabled"
+                          ]
+    },
+    {
+        "ResourceType":  "AWS::EC2::Subnet",
+        "LogicalResourceId":  "EC2Subnet",
+        "WarningType":  "UNSUPPORTED_PROPERTIES",
+        "PropertyPaths":  [
+                              "EnableLniAtDeviceIndex"
+                          ]
+    },
+    {
+        "ResourceType":  "AWS::EC2::Subnet",
+        "LogicalResourceId":  "EC2SubnetBe",
+        "WarningType":  "UNSUPPORTED_PROPERTIES",
+        "PropertyPaths":  [
+                              "EnableLniAtDeviceIndex"
+                          ]
+    },
+    {
+        "ResourceType":  "AWS::EC2::Subnet",
+        "LogicalResourceId":  "EC2SubnetPF",
+        "WarningType":  "UNSUPPORTED_PROPERTIES",
+        "PropertyPaths":  [
+                              "EnableLniAtDeviceIndex"
+                          ]
+    },
+    {
+        "ResourceType":  "AWS::EC2::VPC",
+        "LogicalResourceId":  "EC2VPC",
+        "WarningType":  "UNSUPPORTED_PROPERTIES",
+        "PropertyPaths":  [
+                              "VpcEncryptionControl/VpcLatticeExclusion",
+                              "VpcEncryptionControl/NatGatewayExclusion",
+                              "VpcEncryptionControl/InternetGatewayExclusion",
+                              "VpcEncryptionControl/VirtualPrivateGatewayExclusion",
+                              "VpcEncryptionControl/VpcPeeringExclusion",
+                              "VpcEncryptionControl/ElasticFileSystemExclusion",
+                              "VpcEncryptionControl/LambdaExclusion",
+                              "VpcEncryptionControl/EgressOnlyInternetGatewayExclusion"
+                          ]
+    }
+]

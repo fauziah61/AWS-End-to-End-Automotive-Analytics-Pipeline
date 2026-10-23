@@ -1,0 +1,64 @@
+{
+    "DatabaseName":  "gold_mart",
+    "TableInput":  {
+                       "Name":  "mart_cust_service_prio",
+                       "Retention":  0,
+                       "StorageDescriptor":  {
+                                                 "Columns":  [
+                                                                 {
+                                                                     "Name":  "priority",
+                                                                     "Type":  "string"
+                                                                 },
+                                                                 {
+                                                                     "Name":  "periode",
+                                                                     "Type":  "int"
+                                                                 },
+                                                                 {
+                                                                     "Name":  "vin",
+                                                                     "Type":  "string"
+                                                                 },
+                                                                 {
+                                                                     "Name":  "count_service",
+                                                                     "Type":  "int"
+                                                                 },
+                                                                 {
+                                                                     "Name":  "customer_name",
+                                                                     "Type":  "string"
+                                                                 },
+                                                                 {
+                                                                     "Name":  "address",
+                                                                     "Type":  "string"
+                                                                 },
+                                                                 {
+                                                                     "Name":  "load_timestamp",
+                                                                     "Type":  "timestamp"
+                                                                 }
+                                                             ],
+                                                 "Location":  "s3://<DATA_BUCKET_NAME>/gold-mart/mart_cust_service_prio/",
+                                                 "InputFormat":  "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
+                                                 "OutputFormat":  "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat",
+                                                 "Compressed":  false,
+                                                 "NumberOfBuckets":  0,
+                                                 "SerdeInfo":  {
+                                                                   "SerializationLibrary":  "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe",
+                                                                   "Parameters":  {
+
+                                                                                  }
+                                                               },
+                                                 "SortColumns":  [
+
+                                                                 ],
+                                                 "StoredAsSubDirectories":  false
+                                             },
+                       "PartitionKeys":  [
+
+                                         ],
+                       "TableType":  "EXTERNAL_TABLE",
+                       "Parameters":  {
+                                          "CreatedByJobRun":  "jr_3d804f2c0793b8bf6a65d2bcefeb19ea940e069cb92d6dbe361951962b96be62",
+                                          "CreatedByJob":  "ingest_mart_cust_service_prio",
+                                          "useGlueParquetWriter":  "true",
+                                          "classification":  "parquet"
+                                      }
+                   }
+}

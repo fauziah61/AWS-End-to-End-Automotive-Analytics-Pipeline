@@ -1,0 +1,77 @@
+{
+    "DatabaseName":  "silver_txf",
+    "TableInput":  {
+                       "Name":  "txf_customers_address",
+                       "Retention":  0,
+                       "StorageDescriptor":  {
+                                                 "Columns":  [
+                                                                 {
+                                                                     "Name":  "id",
+                                                                     "Type":  "bigint",
+                                                                     "Comment":  ""
+                                                                 },
+                                                                 {
+                                                                     "Name":  "customer_id",
+                                                                     "Type":  "bigint",
+                                                                     "Comment":  ""
+                                                                 },
+                                                                 {
+                                                                     "Name":  "address",
+                                                                     "Type":  "string",
+                                                                     "Comment":  ""
+                                                                 },
+                                                                 {
+                                                                     "Name":  "city",
+                                                                     "Type":  "string",
+                                                                     "Comment":  ""
+                                                                 },
+                                                                 {
+                                                                     "Name":  "province",
+                                                                     "Type":  "string",
+                                                                     "Comment":  ""
+                                                                 },
+                                                                 {
+                                                                     "Name":  "created_at",
+                                                                     "Type":  "timestamp",
+                                                                     "Comment":  ""
+                                                                 },
+                                                                 {
+                                                                     "Name":  "load_timestamp",
+                                                                     "Type":  "timestamp",
+                                                                     "Comment":  ""
+                                                                 }
+                                                             ],
+                                                 "Location":  "s3://<DATA_BUCKET_NAME>/silver-txf/txf_customers_address/",
+                                                 "InputFormat":  "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
+                                                 "OutputFormat":  "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat",
+                                                 "Compressed":  false,
+                                                 "NumberOfBuckets":  0,
+                                                 "SerdeInfo":  {
+                                                                   "SerializationLibrary":  "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe",
+                                                                   "Parameters":  {
+
+                                                                                  }
+                                                               },
+                                                 "SortColumns":  [
+
+                                                                 ],
+                                                 "StoredAsSubDirectories":  false
+                                             },
+                       "PartitionKeys":  [
+                                             {
+                                                 "Name":  "date_process",
+                                                 "Type":  "date",
+                                                 "Comment":  ""
+                                             }
+                                         ],
+                       "TableType":  "EXTERNAL_TABLE",
+                       "Parameters":  {
+                                          "CreatedByJobRun":  "nb_ingest_stg_customer_address",
+                                          "useGlueParquetWriter":  "true",
+                                          "CreatedByJob":  "nb_ingest_stg_customer_address",
+                                          "classification":  "parquet",
+                                          "UpdatedByJobRun":  "jr_f28399adacec4925a0a08a82c64a8c33b9d7235c8335a66ff6b1064afbc09a82",
+                                          "UpdatedByJob":  "ingest_stg_txf_customer_address"
+                                      }
+                   }
+}

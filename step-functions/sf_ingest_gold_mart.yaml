@@ -1,0 +1,197 @@
+Resources:
+  StateMachinecca80567:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      Definition:
+        Comment: A description of my state machine
+        StartAt: run_mart_parallel
+        States:
+          run_mart_parallel:
+            Type: Parallel
+            Branches:
+              - StartAt: run_mart_sales
+                States:
+                  run_mart_sales:
+                    Type: Task
+                    Resource: arn:aws:states:::glue:startJobRun.sync
+                    Parameters:
+                      JobName: ${gluestartJobRun_JobName_147922b9}
+                      Arguments.$: $.mart_sales
+                    TimeoutSeconds: 1800
+                    ResultPath: $.glue_result
+                    Next: mart_sales_succeeded
+                    Catch:
+                      - ErrorEquals:
+                          - States.ALL
+                        Next: notify_mart_sales_failure
+                        ResultPath: $.failure
+                  mart_sales_succeeded:
+                    Type: Pass
+                    Result:
+                      job: ingest_mart_sales
+                      status: SUCCEEDED
+                    ResultPath: $
+                    End: true
+                  notify_mart_sales_failure:
+                    Type: Task
+                    Resource: arn:aws:states:::sns:publish
+                    Parameters:
+                      TopicArn: ${snspublish_TopicArn_24a5ffc6}
+                      Subject: FAILED - Customer Address
+                      Message.$: $
+                    ResultPath: $.sns_result
+                    Next: mart_sales_failed
+                    Catch:
+                      - ErrorEquals:
+                          - States.ALL
+                        Next: mart_sales_failed
+                        ResultPath: $.notification_error
+                  mart_sales_failed:
+                    Type: Pass
+                    Result:
+                      job: ingest_mart_sales
+                      status: FAILED
+                    ResultPath: $
+                    End: true
+              - StartAt: run_mart_cust_service_prio
+                States:
+                  run_mart_cust_service_prio:
+                    Type: Task
+                    Resource: arn:aws:states:::glue:startJobRun.sync
+                    Parameters:
+                      JobName: ${gluestartJobRun_JobName_f233f83e}
+                      Arguments.$: $.mart_cust_service_prio
+                    TimeoutSeconds: 1800
+                    ResultPath: $.glue_result
+                    Catch:
+                      - ErrorEquals:
+                          - States.ALL
+                        Next: notify_mart_cust_service_prio_failure
+                        ResultPath: $.failure
+                    Next: mart_cust_service_prio_succeeded
+                  notify_mart_cust_service_prio_failure:
+                    Type: Task
+                    Resource: arn:aws:states:::sns:publish
+                    Parameters:
+                      TopicArn: ${snspublish_TopicArn_24a5ffc6}
+                      Subject: FAILED - Customers
+                      Message.$: $
+                    ResultPath: $.sns_result
+                    Catch:
+                      - ErrorEquals:
+                          - States.ALL
+                        Next: mart_cust_service_prio_failed
+                        ResultPath: $.notification_error
+                    Next: mart_cust_service_prio_failed
+                  mart_cust_service_prio_failed:
+                    Type: Pass
+                    Result:
+                      job: ingest_mart_cust_service_prio
+                      status: FAILED
+                    ResultPath: $
+                    End: true
+                  mart_cust_service_prio_succeeded:
+                    Type: Pass
+                    Result:
+                      job: ingest_mart_cust_service_prio
+                      status: SUCCEEDED
+                    ResultPath: $
+                    End: true
+            ResultPath: $.results
+            Next: check_ingest_results
+          check_ingest_results:
+            Type: Choice
+            Choices:
+              - Next: ingest_failed
+                Or:
+                  - Variable: $.results[0].status
+                    StringEquals: FAILED
+                  - Variable: $.results[1].status
+                    StringEquals: FAILED
+                  - Variable: $.results[2].status
+                    StringEquals: FAILED
+                  - Variable: $.results[3].status
+                    StringEquals: FAILED
+            Default: success
+          ingest_failed:
+            Type: Fail
+            Cause: Satu atau lebih job ingest gagal
+            Error: IngestJobFailed
+          success:
+            Type: Succeed
+        QueryLanguage: JSONPath
+      DefinitionSubstitutions:
+        gluestartJobRun_JobName_147922b9: ingest_mart_sales
+        snspublish_TopicArn_24a5ffc6: arn:aws:sns:ap-southeast-2:<AWS_ACCOUNT_ID>:data-pipeline-failure
+        gluestartJobRun_JobName_f233f83e: ingest_mart_cust_service_prio
+      RoleArn:
+        Fn::GetAtt:
+          - Role6a111f1a
+          - Arn
+      StateMachineName: StateMachinecca80567
+      StateMachineType: STANDARD
+      EncryptionConfiguration:
+        Type: AWS_OWNED_KEY
+      LoggingConfiguration:
+        Level: 'OFF'
+        IncludeExecutionData: false
+  Role6a111f1a:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: StepFunctions_IAM_ROLE_sf_ingest_gold_martcce3e602
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: states.amazonaws.com
+            Action: sts:AssumeRole
+      MaxSessionDuration: 3600
+  Policyb667b4b0:
+    Type: AWS::IAM::RolePolicy
+    Properties:
+      PolicyName: SnsPublishScopedAccessPolicy324d348e
+      RoleName:
+        Ref: Role6a111f1a
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - sns:Publish
+            Resource:
+              - arn:aws:sns:ap-southeast-2:<AWS_ACCOUNT_ID>:data-pipeline-failure
+  Policyb3419635:
+    Type: AWS::IAM::RolePolicy
+    Properties:
+      PolicyName: XRayAccessPolicy5d95722d
+      RoleName:
+        Ref: Role6a111f1a
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - xray:PutTraceSegments
+              - xray:PutTelemetryRecords
+              - xray:GetSamplingRules
+              - xray:GetSamplingTargets
+            Resource:
+              - '*'
+  Policyed6a110b:
+    Type: AWS::IAM::RolePolicy
+    Properties:
+      PolicyName: GlueJobRunManagementFullAccessPolicy9c7e5420
+      RoleName:
+        Ref: Role6a111f1a
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Action:
+              - glue:StartJobRun
+              - glue:GetJobRun
+              - glue:GetJobRuns
+              - glue:BatchStopJobRun
+            Effect: Allow
+            Resource:
+              - '*'

@@ -1,0 +1,191 @@
+{
+    "Name":  "ingest_stg_bronze",
+    "JobMode":  "SCRIPT",
+    "JobRunQueuingEnabled":  false,
+    "Role":  "arn:aws:iam::<AWS_ACCOUNT_ID>:role/AWSGlueServiceRole",
+    "ExecutionProperty":  {
+                              "MaxConcurrentRuns":  1
+                          },
+    "Command":  {
+                    "Name":  "glueetl",
+                    "ScriptLocation":  "s3://<DATA_BUCKET_NAME>/scripts/ingest_stg_bronze.py",
+                    "PythonVersion":  "3"
+                },
+    "DefaultArguments":  {
+                             "--enable-spark-ui":  "true",
+                             "--extra-py-files":  "s3://aws-glue-studio-transforms-234881715811-prod-ap-southeast-2/gs_common.py,s3://aws-glue-studio-transforms-234881715811-prod-ap-southeast-2/gs_derived.py",
+                             "--spark-event-logs-path":  "s3://<DATA_BUCKET_NAME>/log/",
+                             "--enable-job-insights":  "true",
+                             "--enable-observability-metrics":  "false",
+                             "--conf":  "spark.sql.session.timeZone=Asia/Jakarta --conf spark.sql.ansi.enabled=false --conf spark.sql.legacy.timeParserPolicy=CORRECTED --conf spark.eventLog.rolling.enabled=true --conf spark.sql.catalog.glue_catalog.glue.skip-name-validation=true",
+                             "--enable-glue-datacatalog":  "",
+                             "--enable-continuous-cloudwatch-log":  "false",
+                             "--job-bookmark-option":  "job-bookmark-disable",
+                             "--job-language":  "python",
+                             "--TempDir":  "s3://<DATA_BUCKET_NAME>/temp/"
+                         },
+    "MaxRetries":  0,
+    "Timeout":  480,
+    "GlueVersion":  "6.0",
+    "NumberOfWorkers":  10,
+    "WorkerType":  "G.1X",
+    "CodeGenConfigurationNodes":  {
+                                      "node-1791542747811":  {
+                                                                 "CatalogSource":  {
+                                                                                       "Name":  "src_customers",
+                                                                                       "Database":  "bronze_stg",
+                                                                                       "Table":  "customer_address_csv",
+                                                                                       "PartitionPredicate":  ""
+                                                                                   }
+                                                             },
+                                      "node-1791543505414":  {
+                                                                 "S3GlueParquetTarget":  {
+                                                                                             "Name":  "out_customers",
+                                                                                             "Inputs":  [
+                                                                                                            "node-1791543191646"
+                                                                                                        ],
+                                                                                             "PartitionKeys":  [
+
+                                                                                                               ],
+                                                                                             "Path":  "s3://<DATA_BUCKET_NAME>/silver-txf/txf_customers_address/",
+                                                                                             "Compression":  "uncompressed",
+                                                                                             "NumberTargetPartitions":  "0",
+                                                                                             "SchemaChangePolicy":  {
+                                                                                                                        "EnableUpdateCatalog":  false
+                                                                                                                    },
+                                                                                             "AutoDataQuality":  {
+                                                                                                                     "IsEnabled":  true,
+                                                                                                                     "EvaluationContext":  "EvaluateDataQuality_node1791536058025"
+                                                                                                                 }
+                                                                                         }
+                                                             },
+                                      "node-1791543768813":  {
+                                                                 "ApplyMapping":  {
+                                                                                      "Name":  "Change Schema",
+                                                                                      "Inputs":  [
+                                                                                                     "node-1791542747811"
+                                                                                                 ],
+                                                                                      "Mapping":  [
+                                                                                                      {
+                                                                                                          "ToKey":  "id",
+                                                                                                          "FromPath":  [
+                                                                                                                           "id"
+                                                                                                                       ],
+                                                                                                          "FromType":  "string",
+                                                                                                          "ToType":  "bigint",
+                                                                                                          "Dropped":  false
+                                                                                                      },
+                                                                                                      {
+                                                                                                          "ToKey":  "customer_id",
+                                                                                                          "FromPath":  [
+                                                                                                                           "customer_id"
+                                                                                                                       ],
+                                                                                                          "FromType":  "string",
+                                                                                                          "ToType":  "bigint",
+                                                                                                          "Dropped":  false
+                                                                                                      },
+                                                                                                      {
+                                                                                                          "ToKey":  "address",
+                                                                                                          "FromPath":  [
+                                                                                                                           "address"
+                                                                                                                       ],
+                                                                                                          "FromType":  "string",
+                                                                                                          "ToType":  "varchar",
+                                                                                                          "Dropped":  false
+                                                                                                      },
+                                                                                                      {
+                                                                                                          "ToKey":  "city",
+                                                                                                          "FromPath":  [
+                                                                                                                           "city"
+                                                                                                                       ],
+                                                                                                          "FromType":  "string",
+                                                                                                          "ToType":  "varchar",
+                                                                                                          "Dropped":  false
+                                                                                                      },
+                                                                                                      {
+                                                                                                          "ToKey":  "province",
+                                                                                                          "FromPath":  [
+                                                                                                                           "province"
+                                                                                                                       ],
+                                                                                                          "FromType":  "string",
+                                                                                                          "ToType":  "varchar",
+                                                                                                          "Dropped":  false
+                                                                                                      },
+                                                                                                      {
+                                                                                                          "ToKey":  "created_at",
+                                                                                                          "FromPath":  [
+                                                                                                                           "created_at"
+                                                                                                                       ],
+                                                                                                          "FromType":  "string",
+                                                                                                          "ToType":  "timestamp",
+                                                                                                          "Dropped":  false
+                                                                                                      }
+                                                                                                  ]
+                                                                                  }
+                                                             },
+                                      "node-1791543191646":  {
+                                                                 "DynamicTransform":  {
+                                                                                          "Name":  "add_load_timestamp",
+                                                                                          "TransformName":  "gs_derived",
+                                                                                          "Inputs":  [
+                                                                                                         "node-1791543768813"
+                                                                                                     ],
+                                                                                          "Parameters":  [
+                                                                                                             {
+                                                                                                                 "Name":  "colName",
+                                                                                                                 "Type":  "str",
+                                                                                                                 "Value":  [
+                                                                                                                               "load_timestamp"
+                                                                                                                           ],
+                                                                                                                 "IsOptional":  false
+                                                                                                             },
+                                                                                                             {
+                                                                                                                 "Name":  "expr",
+                                                                                                                 "Type":  "str",
+                                                                                                                 "Value":  [
+                                                                                                                               "current_timestamp()"
+                                                                                                                           ],
+                                                                                                                 "IsOptional":  false
+                                                                                                             }
+                                                                                                         ],
+                                                                                          "FunctionName":  "gs_derived",
+                                                                                          "Path":  "s3://aws-glue-studio-transforms-234881715811-prod-ap-southeast-2/gs_derived.py",
+                                                                                          "Version":  "1.0.0",
+                                                                                          "OutputSchemas":  [
+                                                                                                                {
+                                                                                                                    "Columns":  [
+                                                                                                                                    {
+                                                                                                                                        "Name":  "id",
+                                                                                                                                        "Type":  "bigint"
+                                                                                                                                    },
+                                                                                                                                    {
+                                                                                                                                        "Name":  "customer_id",
+                                                                                                                                        "Type":  "bigint"
+                                                                                                                                    },
+                                                                                                                                    {
+                                                                                                                                        "Name":  "address",
+                                                                                                                                        "Type":  "string"
+                                                                                                                                    },
+                                                                                                                                    {
+                                                                                                                                        "Name":  "city",
+                                                                                                                                        "Type":  "string"
+                                                                                                                                    },
+                                                                                                                                    {
+                                                                                                                                        "Name":  "province",
+                                                                                                                                        "Type":  "string"
+                                                                                                                                    },
+                                                                                                                                    {
+                                                                                                                                        "Name":  "created_at",
+                                                                                                                                        "Type":  "timestamp"
+                                                                                                                                    },
+                                                                                                                                    {
+                                                                                                                                        "Name":  "load_timestamp",
+                                                                                                                                        "Type":  "timestamp"
+                                                                                                                                    }
+                                                                                                                                ]
+                                                                                                                }
+                                                                                                            ]
+                                                                                      }
+                                                             }
+                                  }
+}

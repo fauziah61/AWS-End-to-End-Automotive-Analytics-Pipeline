@@ -1,0 +1,54 @@
+{
+    "Name":  "crawler_s3_raw",
+    "Role":  "AWSGlueServiceRole",
+    "DatabaseName":  "bronze_stg",
+    "Targets":  {
+                    "S3Targets":  [
+                                      {
+                                          "Path":  "s3://<DATA_BUCKET_NAME>/bronze-stg/customer_address_csv/",
+                                          "Exclusions":  [
+
+                                                         ]
+                                      }
+                                  ],
+                    "JdbcTargets":  [
+
+                                    ],
+                    "MongoDBTargets":  [
+
+                                       ],
+                    "DynamoDBTargets":  [
+
+                                        ],
+                    "CatalogTargets":  [
+
+                                       ],
+                    "DeltaTargets":  [
+
+                                     ],
+                    "IcebergTargets":  [
+
+                                       ],
+                    "HudiTargets":  [
+
+                                    ]
+                },
+    "Classifiers":  [
+                        "customer-address-multidelimiter"
+                    ],
+    "SchemaChangePolicy":  {
+                               "UpdateBehavior":  "UPDATE_IN_DATABASE",
+                               "DeleteBehavior":  "DEPRECATE_IN_DATABASE"
+                           },
+    "RecrawlPolicy":  {
+                          "RecrawlBehavior":  "CRAWL_EVERYTHING"
+                      },
+    "LineageConfiguration":  {
+                                 "CrawlerLineageSettings":  "DISABLE"
+                             },
+    "LakeFormationConfiguration":  {
+                                       "UseLakeFormationCredentials":  false,
+                                       "AccountId":  ""
+                                   },
+    "Configuration":  "{\"Version\":1.0,\"CreatePartitionIndex\":true}"
+}

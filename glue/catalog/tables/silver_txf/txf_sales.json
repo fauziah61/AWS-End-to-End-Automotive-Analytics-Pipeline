@@ -1,0 +1,69 @@
+{
+    "DatabaseName":  "silver_txf",
+    "TableInput":  {
+                       "Name":  "txf_sales",
+                       "Retention":  0,
+                       "StorageDescriptor":  {
+                                                 "Columns":  [
+                                                                 {
+                                                                     "Name":  "vin",
+                                                                     "Type":  "string"
+                                                                 },
+                                                                 {
+                                                                     "Name":  "customer_id",
+                                                                     "Type":  "bigint"
+                                                                 },
+                                                                 {
+                                                                     "Name":  "model",
+                                                                     "Type":  "string"
+                                                                 },
+                                                                 {
+                                                                     "Name":  "invoice_date",
+                                                                     "Type":  "date"
+                                                                 },
+                                                                 {
+                                                                     "Name":  "price",
+                                                                     "Type":  "decimal(38,5)"
+                                                                 },
+                                                                 {
+                                                                     "Name":  "created_at",
+                                                                     "Type":  "timestamp"
+                                                                 },
+                                                                 {
+                                                                     "Name":  "load_timestamp",
+                                                                     "Type":  "timestamp"
+                                                                 }
+                                                             ],
+                                                 "Location":  "s3://<DATA_BUCKET_NAME>/silver-txf/txf_sales/",
+                                                 "InputFormat":  "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
+                                                 "OutputFormat":  "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat",
+                                                 "Compressed":  false,
+                                                 "NumberOfBuckets":  0,
+                                                 "SerdeInfo":  {
+                                                                   "SerializationLibrary":  "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe",
+                                                                   "Parameters":  {
+
+                                                                                  }
+                                                               },
+                                                 "SortColumns":  [
+
+                                                                 ],
+                                                 "StoredAsSubDirectories":  false
+                                             },
+                       "PartitionKeys":  [
+                                             {
+                                                 "Name":  "tran_date",
+                                                 "Type":  "date"
+                                             }
+                                         ],
+                       "TableType":  "EXTERNAL_TABLE",
+                       "Parameters":  {
+                                          "CreatedByJobRun":  "jr_e19c06b68243359497552a94c40df9212607d270dde41d0708a577d6c793b3a6",
+                                          "useGlueParquetWriter":  "true",
+                                          "CreatedByJob":  "ingest_txf_sales",
+                                          "classification":  "parquet",
+                                          "UpdatedByJobRun":  "jr_7beae22b533f24cb528972e749917140d3475936348949471da64f5ad658819d",
+                                          "UpdatedByJob":  "ingest_txf_sales"
+                                      }
+                   }
+}

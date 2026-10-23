@@ -1,0 +1,299 @@
+Resources:
+  StateMachine4603d69c:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      Definition:
+        Comment: A description of my state machine
+        StartAt: run_ingest_parallel
+        States:
+          run_ingest_parallel:
+            Type: Parallel
+            Branches:
+              - StartAt: run_customer_address
+                States:
+                  run_customer_address:
+                    Type: Task
+                    Resource: arn:aws:states:::glue:startJobRun.sync
+                    Parameters:
+                      JobName: ${gluestartJobRun_JobName_6fc6d4a2}
+                      Arguments.$: $.customer_address
+                    TimeoutSeconds: 1800
+                    ResultPath: $.glue_result
+                    Next: customer_address_succeeded
+                    Catch:
+                      - ErrorEquals:
+                          - States.ALL
+                        Next: notify_customer_address_failure
+                        ResultPath: $.failure
+                  customer_address_succeeded:
+                    Type: Pass
+                    Result:
+                      job: ingest_stg_txf_customer_address
+                      status: SUCCEEDED
+                    ResultPath: $
+                    End: true
+                  notify_customer_address_failure:
+                    Type: Task
+                    Resource: arn:aws:states:::sns:publish
+                    Parameters:
+                      TopicArn: ${snspublish_TopicArn_b6348e20}
+                      Subject: FAILED - Customer Address
+                      Message.$: >-
+                        States.Format('Job: ingest_stg_txf_customer_address |
+                        Execution: {} | Error: {}', $$.Execution.Id,
+                        States.JsonToString($.failure))
+                    ResultPath: $.sns_result
+                    Next: customer_address_failed
+                    Catch:
+                      - ErrorEquals:
+                          - States.ALL
+                        Next: customer_address_failed
+                        ResultPath: $.notification_error
+                  customer_address_failed:
+                    Type: Pass
+                    Result:
+                      job: ingest_stg_txf_customer_address
+                      status: FAILED
+                    ResultPath: $
+                    End: true
+              - StartAt: run_customers
+                States:
+                  run_customers:
+                    Type: Task
+                    Resource: arn:aws:states:::glue:startJobRun.sync
+                    Parameters:
+                      JobName: ${gluestartJobRun_JobName_8b903512}
+                      Arguments.$: $.customers
+                    TimeoutSeconds: 1800
+                    ResultPath: $.glue_result
+                    Catch:
+                      - ErrorEquals:
+                          - States.ALL
+                        Next: notify_customers
+                        ResultPath: $.failure
+                    Next: customers_succeeded
+                  notify_customers:
+                    Type: Task
+                    Resource: arn:aws:states:::sns:publish
+                    Parameters:
+                      TopicArn: ${snspublish_TopicArn_b6348e20}
+                      Subject: FAILED - Customers
+                      Message.$: >-
+                        States.Format('Job: ingest_txf_customers | Execution: {}
+                        | Error: {}', $$.Execution.Id,
+                        States.JsonToString($.failure))
+                    ResultPath: $.sns_result
+                    Catch:
+                      - ErrorEquals:
+                          - States.ALL
+                        Next: customers_failed
+                        ResultPath: $.notification_error
+                    Next: customers_failed
+                  customers_failed:
+                    Type: Pass
+                    Result:
+                      job: ingest_txf_customers
+                      status: FAILED
+                    ResultPath: $
+                    End: true
+                  customers_succeeded:
+                    Type: Pass
+                    Result:
+                      job: ingest_txf_customers
+                      status: SUCCEEDED
+                    ResultPath: $
+                    End: true
+              - StartAt: run_sales
+                States:
+                  run_sales:
+                    Type: Task
+                    Resource: arn:aws:states:::glue:startJobRun.sync
+                    Parameters:
+                      JobName: ${gluestartJobRun_JobName_1ab8c2fe}
+                      Arguments.$: $.sales
+                    TimeoutSeconds: 1800
+                    ResultPath: $.glue_result
+                    Catch:
+                      - ErrorEquals:
+                          - States.ALL
+                        Next: notify_sales
+                        ResultPath: $.failure
+                    Next: sales_succeeded
+                  sales_succeeded:
+                    Type: Pass
+                    Result:
+                      job: ingest_txf_sales
+                      status: SUCCEEDED
+                    ResultPath: $
+                    End: true
+                  notify_sales:
+                    Type: Task
+                    Resource: arn:aws:states:::sns:publish
+                    Parameters:
+                      TopicArn: ${snspublish_TopicArn_b6348e20}
+                      Subject: FAILED - Sales
+                      Message.$: >-
+                        States.Format('Job: ingest_txf_sales | Execution: {} |
+                        Error: {}', $$.Execution.Id,
+                        States.JsonToString($.failure))
+                    ResultPath: $.sns_result
+                    Catch:
+                      - ErrorEquals:
+                          - States.ALL
+                        Next: sales_failed
+                        ResultPath: $.notification_error
+                    Next: sales_failed
+                  sales_failed:
+                    Type: Pass
+                    Result:
+                      job: ingest_txf_sales
+                      status: FAILED
+                    ResultPath: $
+                    End: true
+              - StartAt: run_after_sales
+                States:
+                  run_after_sales:
+                    Type: Task
+                    Resource: arn:aws:states:::glue:startJobRun.sync
+                    Parameters:
+                      JobName: ${gluestartJobRun_JobName_f881d002}
+                      Arguments.$: $.after_sales
+                    TimeoutSeconds: 1800
+                    ResultPath: $.glue_result
+                    Catch:
+                      - ErrorEquals:
+                          - States.ALL
+                        Next: notify_after_sales
+                        ResultPath: $.failure
+                    Next: after_sales_succeeded
+                  after_sales_succeeded:
+                    Type: Pass
+                    Result:
+                      job: ingest_after_sales
+                      status: SUCCEEDED
+                    ResultPath: $
+                    End: true
+                  notify_after_sales:
+                    Type: Task
+                    Resource: arn:aws:states:::sns:publish
+                    Parameters:
+                      TopicArn: ${snspublish_TopicArn_b6348e20}
+                      Subject: FAILED - After_Sales
+                      Message.$: >-
+                        States.Format('Job: ingest_txf_after_sales | Execution:
+                        {} | Error: {}', $$.Execution.Id,
+                        States.JsonToString($.failure))
+                    ResultPath: $.sns_result
+                    Catch:
+                      - ErrorEquals:
+                          - States.ALL
+                        Next: after_sales_failed
+                        ResultPath: $.notification_error
+                    Next: after_sales_failed
+                  after_sales_failed:
+                    Type: Pass
+                    End: true
+                    Result:
+                      job: ingest_txf_after_sales
+                      status: FAILED
+                    ResultPath: $
+            ResultPath: $.results
+            Next: check_ingest_results
+          check_ingest_results:
+            Type: Choice
+            Choices:
+              - Next: ingest_failed
+                Or:
+                  - Variable: $.results[0].status
+                    StringEquals: FAILED
+                  - Variable: $.results[1].status
+                    StringEquals: FAILED
+                  - Variable: $.results[2].status
+                    StringEquals: FAILED
+                  - Variable: $.results[3].status
+                    StringEquals: FAILED
+            Default: success
+          ingest_failed:
+            Type: Fail
+            Cause: Satu atau lebih job ingest gagal
+            Error: IngestJobFailed
+          success:
+            Type: Succeed
+        QueryLanguage: JSONPath
+      DefinitionSubstitutions:
+        gluestartJobRun_JobName_6fc6d4a2: ingest_stg-txf_customer_address
+        snspublish_TopicArn_b6348e20: arn:aws:sns:ap-southeast-2:<AWS_ACCOUNT_ID>:data-pipeline-failure
+        gluestartJobRun_JobName_8b903512: ingest_txf_customers
+        gluestartJobRun_JobName_1ab8c2fe: ingest_txf_sales
+        gluestartJobRun_JobName_f881d002: ingest_txf_after_sales
+      RoleArn:
+        Fn::GetAtt:
+          - Role760b3c34
+          - Arn
+      StateMachineName: StateMachine4603d69c
+      StateMachineType: STANDARD
+      EncryptionConfiguration:
+        Type: AWS_OWNED_KEY
+      LoggingConfiguration:
+        Level: 'OFF'
+        IncludeExecutionData: false
+  Role760b3c34:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: StepFunctions_IAM_ROLE_sf_ingest_silver7f88fd42
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: states.amazonaws.com
+            Action: sts:AssumeRole
+      MaxSessionDuration: 3600
+  Policy064e8dde:
+    Type: AWS::IAM::RolePolicy
+    Properties:
+      PolicyName: SnsPublishScopedAccessPolicy695988a9
+      RoleName:
+        Ref: Role760b3c34
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - sns:Publish
+            Resource:
+              - arn:aws:sns:ap-southeast-2:<AWS_ACCOUNT_ID>:data-pipeline-failure
+  Policyddbc07cb:
+    Type: AWS::IAM::RolePolicy
+    Properties:
+      PolicyName: XRayAccessPolicyc253a1b1
+      RoleName:
+        Ref: Role760b3c34
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - xray:PutTraceSegments
+              - xray:PutTelemetryRecords
+              - xray:GetSamplingRules
+              - xray:GetSamplingTargets
+            Resource:
+              - '*'
+  Policy5a929b14:
+    Type: AWS::IAM::RolePolicy
+    Properties:
+      PolicyName: GlueJobRunManagementFullAccessPolicycfa5dc1f
+      RoleName:
+        Ref: Role760b3c34
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Action:
+              - glue:StartJobRun
+              - glue:GetJobRun
+              - glue:GetJobRuns
+              - glue:BatchStopJobRun
+            Effect: Allow
+            Resource:
+              - '*'

@@ -1,0 +1,68 @@
+{
+    "DatabaseName":  "bronze_stg",
+    "TableInput":  {
+                       "Name":  "postgres_public_stg_customers_raw",
+                       "Owner":  "owner",
+                       "LastAccessTime":  "2026-10-17T15:23:22+07:00",
+                       "Retention":  0,
+                       "StorageDescriptor":  {
+                                                 "Columns":  [
+                                                                 {
+                                                                     "Name":  "dob",
+                                                                     "Type":  "string"
+                                                                 },
+                                                                 {
+                                                                     "Name":  "name",
+                                                                     "Type":  "string"
+                                                                 },
+                                                                 {
+                                                                     "Name":  "created_at",
+                                                                     "Type":  "string"
+                                                                 },
+                                                                 {
+                                                                     "Name":  "id",
+                                                                     "Type":  "string"
+                                                                 }
+                                                             ],
+                                                 "Location":  "postgres.public.stg_customers_raw",
+                                                 "Compressed":  false,
+                                                 "NumberOfBuckets":  -1,
+                                                 "SerdeInfo":  {
+                                                                   "Parameters":  {
+
+                                                                                  }
+                                                               },
+                                                 "BucketColumns":  [
+
+                                                                   ],
+                                                 "SortColumns":  [
+
+                                                                 ],
+                                                 "Parameters":  {
+                                                                    "UPDATED_BY_CRAWLER":  "postgres_public_stg_customers_raw",
+                                                                    "CRAWL_RUN_ID":  "d251da78-e765-40b0-9792-49da3dd78272",
+                                                                    "CrawlerSchemaSerializerVersion":  "1.0",
+                                                                    "connectionName":  "Postgresql connection",
+                                                                    "compressionType":  "none",
+                                                                    "CrawlerSchemaDeserializerVersion":  "1.0",
+                                                                    "classification":  "postgresql",
+                                                                    "typeOfData":  "table"
+                                                                },
+                                                 "StoredAsSubDirectories":  false
+                                             },
+                       "PartitionKeys":  [
+
+                                         ],
+                       "TableType":  "EXTERNAL_TABLE",
+                       "Parameters":  {
+                                          "UPDATED_BY_CRAWLER":  "postgres_public_stg_customers_raw",
+                                          "CRAWL_RUN_ID":  "d251da78-e765-40b0-9792-49da3dd78272",
+                                          "CrawlerSchemaSerializerVersion":  "1.0",
+                                          "connectionName":  "Postgresql connection",
+                                          "compressionType":  "none",
+                                          "CrawlerSchemaDeserializerVersion":  "1.0",
+                                          "classification":  "postgresql",
+                                          "typeOfData":  "table"
+                                      }
+                   }
+}

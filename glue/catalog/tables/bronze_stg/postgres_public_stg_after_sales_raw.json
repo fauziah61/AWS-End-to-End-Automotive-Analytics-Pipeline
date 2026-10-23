@@ -1,0 +1,80 @@
+{
+    "DatabaseName":  "bronze_stg",
+    "TableInput":  {
+                       "Name":  "postgres_public_stg_after_sales_raw",
+                       "Owner":  "owner",
+                       "LastAccessTime":  "2026-10-13T21:39:16+07:00",
+                       "Retention":  0,
+                       "StorageDescriptor":  {
+                                                 "Columns":  [
+                                                                 {
+                                                                     "Name":  "service_type",
+                                                                     "Type":  "string"
+                                                                 },
+                                                                 {
+                                                                     "Name":  "service_date",
+                                                                     "Type":  "string"
+                                                                 },
+                                                                 {
+                                                                     "Name":  "service_ticket",
+                                                                     "Type":  "string"
+                                                                 },
+                                                                 {
+                                                                     "Name":  "created_at",
+                                                                     "Type":  "string"
+                                                                 },
+                                                                 {
+                                                                     "Name":  "vin",
+                                                                     "Type":  "string"
+                                                                 },
+                                                                 {
+                                                                     "Name":  "model",
+                                                                     "Type":  "string"
+                                                                 },
+                                                                 {
+                                                                     "Name":  "customer_id",
+                                                                     "Type":  "string"
+                                                                 }
+                                                             ],
+                                                 "Location":  "postgres.public.stg_after_sales_raw",
+                                                 "Compressed":  false,
+                                                 "NumberOfBuckets":  -1,
+                                                 "SerdeInfo":  {
+                                                                   "Parameters":  {
+
+                                                                                  }
+                                                               },
+                                                 "BucketColumns":  [
+
+                                                                   ],
+                                                 "SortColumns":  [
+
+                                                                 ],
+                                                 "Parameters":  {
+                                                                    "UPDATED_BY_CRAWLER":  "postgres_public_stg_after_sales_raw",
+                                                                    "CRAWL_RUN_ID":  "3258406a-65a6-4d5b-b495-b3dccb080b88",
+                                                                    "CrawlerSchemaSerializerVersion":  "1.0",
+                                                                    "connectionName":  "Postgresql connection",
+                                                                    "compressionType":  "none",
+                                                                    "CrawlerSchemaDeserializerVersion":  "1.0",
+                                                                    "classification":  "postgresql",
+                                                                    "typeOfData":  "table"
+                                                                },
+                                                 "StoredAsSubDirectories":  false
+                                             },
+                       "PartitionKeys":  [
+
+                                         ],
+                       "TableType":  "EXTERNAL_TABLE",
+                       "Parameters":  {
+                                          "UPDATED_BY_CRAWLER":  "postgres_public_stg_after_sales_raw",
+                                          "CRAWL_RUN_ID":  "3258406a-65a6-4d5b-b495-b3dccb080b88",
+                                          "CrawlerSchemaSerializerVersion":  "1.0",
+                                          "connectionName":  "Postgresql connection",
+                                          "compressionType":  "none",
+                                          "CrawlerSchemaDeserializerVersion":  "1.0",
+                                          "classification":  "postgresql",
+                                          "typeOfData":  "table"
+                                      }
+                   }
+}

@@ -2,26 +2,26 @@
   "name" : "ingest_txf_after_sales",
   "jobMode" : "VISUAL",
   "description" : "",
-  "role" : "arn:aws:iam::127225912918:role/AWSGlueServiceRole",
+  "role" : "arn:aws:iam::<AWS_ACCOUNT_ID>:role/AWSGlueServiceRole",
   "executionProperty" : {
     "maxConcurrentRuns" : 1
   },
   "command" : {
     "name" : "glueetl",
-    "scriptLocation" : "s3://aws-glue-assets-127225912918-ap-southeast-2/scripts/ingest_txf_after_sales.py",
+    "scriptLocation" : "s3://aws-glue-assets-<AWS_ACCOUNT_ID>-ap-southeast-2/scripts/ingest_txf_after_sales.py",
     "pythonVersion" : "3"
   },
   "defaultArguments" : {
     "--enable-spark-ui" : "true",
     "--extra-py-files" : "s3://aws-glue-studio-transforms-234881715811-prod-ap-southeast-2/gs_common.py,s3://aws-glue-studio-transforms-234881715811-prod-ap-southeast-2/gs_derived.py",
-    "--spark-event-logs-path" : "s3://aws-glue-assets-127225912918-ap-southeast-2/sparkHistoryLogs/",
+    "--spark-event-logs-path" : "s3://aws-glue-assets-<AWS_ACCOUNT_ID>-ap-southeast-2/sparkHistoryLogs/",
     "--enable-job-insights" : "true",
     "--is_initial_load" : "false",
     "--conf" : "spark.eventLog.rolling.enabled=true --conf spark.sql.catalog.glue_catalog.glue.skip-name-validation=true",
     "--enable-glue-datacatalog" : "",
     "--job-bookmark-option" : "job-bookmark-disable",
     "--job-language" : "python",
-    "--TempDir" : "s3://aws-glue-assets-127225912918-ap-southeast-2/temporary/"
+    "--TempDir" : "s3://aws-glue-assets-<AWS_ACCOUNT_ID>-ap-southeast-2/temporary/"
   },
   "connections" : {
     "connections" : [ "Postgresql connection" ]

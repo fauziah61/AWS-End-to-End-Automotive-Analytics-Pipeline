@@ -1,0 +1,76 @@
+{
+    "DatabaseName":  "src_rds",
+    "TableInput":  {
+                       "Name":  "postgres_public_stg_sales_raw",
+                       "Owner":  "owner",
+                       "LastAccessTime":  "2026-10-09T15:05:21+07:00",
+                       "Retention":  0,
+                       "StorageDescriptor":  {
+                                                 "Columns":  [
+                                                                 {
+                                                                     "Name":  "price",
+                                                                     "Type":  "string"
+                                                                 },
+                                                                 {
+                                                                     "Name":  "created_at",
+                                                                     "Type":  "string"
+                                                                 },
+                                                                 {
+                                                                     "Name":  "vin",
+                                                                     "Type":  "string"
+                                                                 },
+                                                                 {
+                                                                     "Name":  "model",
+                                                                     "Type":  "string"
+                                                                 },
+                                                                 {
+                                                                     "Name":  "customer_id",
+                                                                     "Type":  "string"
+                                                                 },
+                                                                 {
+                                                                     "Name":  "invoice_date",
+                                                                     "Type":  "string"
+                                                                 }
+                                                             ],
+                                                 "Location":  "postgres.public.stg_sales_raw",
+                                                 "Compressed":  false,
+                                                 "NumberOfBuckets":  -1,
+                                                 "SerdeInfo":  {
+                                                                   "Parameters":  {
+
+                                                                                  }
+                                                               },
+                                                 "BucketColumns":  [
+
+                                                                   ],
+                                                 "SortColumns":  [
+
+                                                                 ],
+                                                 "Parameters":  {
+                                                                    "UPDATED_BY_CRAWLER":  "crawler_source_rds",
+                                                                    "CRAWL_RUN_ID":  "41ab15c8-e0f8-4f71-a2a4-6413888d9a51",
+                                                                    "CrawlerSchemaSerializerVersion":  "1.0",
+                                                                    "connectionName":  "Postgresql connection",
+                                                                    "compressionType":  "none",
+                                                                    "CrawlerSchemaDeserializerVersion":  "1.0",
+                                                                    "classification":  "postgresql",
+                                                                    "typeOfData":  "table"
+                                                                },
+                                                 "StoredAsSubDirectories":  false
+                                             },
+                       "PartitionKeys":  [
+
+                                         ],
+                       "TableType":  "EXTERNAL_TABLE",
+                       "Parameters":  {
+                                          "UPDATED_BY_CRAWLER":  "crawler_source_rds",
+                                          "CRAWL_RUN_ID":  "41ab15c8-e0f8-4f71-a2a4-6413888d9a51",
+                                          "CrawlerSchemaSerializerVersion":  "1.0",
+                                          "connectionName":  "Postgresql connection",
+                                          "compressionType":  "none",
+                                          "CrawlerSchemaDeserializerVersion":  "1.0",
+                                          "classification":  "postgresql",
+                                          "typeOfData":  "table"
+                                      }
+                   }
+}

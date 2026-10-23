@@ -1,0 +1,54 @@
+{
+    "Name":  "txf_customers",
+    "Role":  "AWSGlueServiceRole",
+    "DatabaseName":  "silver_txf",
+    "Targets":  {
+                    "S3Targets":  [
+                                      {
+                                          "Path":  "s3://<DATA_BUCKET_NAME>/silver-txf/txf_customers/",
+                                          "Exclusions":  [
+
+                                                         ]
+                                      }
+                                  ],
+                    "JdbcTargets":  [
+
+                                    ],
+                    "MongoDBTargets":  [
+
+                                       ],
+                    "DynamoDBTargets":  [
+
+                                        ],
+                    "CatalogTargets":  [
+
+                                       ],
+                    "DeltaTargets":  [
+
+                                     ],
+                    "IcebergTargets":  [
+
+                                       ],
+                    "HudiTargets":  [
+
+                                    ]
+                },
+    "Classifiers":  [
+
+                    ],
+    "SchemaChangePolicy":  {
+                               "UpdateBehavior":  "UPDATE_IN_DATABASE",
+                               "DeleteBehavior":  "DEPRECATE_IN_DATABASE"
+                           },
+    "RecrawlPolicy":  {
+                          "RecrawlBehavior":  "CRAWL_EVERYTHING"
+                      },
+    "LineageConfiguration":  {
+                                 "CrawlerLineageSettings":  "DISABLE"
+                             },
+    "LakeFormationConfiguration":  {
+                                       "UseLakeFormationCredentials":  false,
+                                       "AccountId":  ""
+                                   },
+    "Configuration":  "{\"Version\":1.0,\"CreatePartitionIndex\":true}"
+}

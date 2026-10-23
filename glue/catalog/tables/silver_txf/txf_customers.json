@@ -1,0 +1,67 @@
+{
+    "DatabaseName":  "silver_txf",
+    "TableInput":  {
+                       "Name":  "txf_customers",
+                       "Retention":  0,
+                       "StorageDescriptor":  {
+                                                 "Columns":  [
+                                                                 {
+                                                                     "Name":  "id",
+                                                                     "Type":  "bigint",
+                                                                     "Comment":  ""
+                                                                 },
+                                                                 {
+                                                                     "Name":  "name",
+                                                                     "Type":  "string",
+                                                                     "Comment":  ""
+                                                                 },
+                                                                 {
+                                                                     "Name":  "dob",
+                                                                     "Type":  "date",
+                                                                     "Comment":  ""
+                                                                 },
+                                                                 {
+                                                                     "Name":  "created_at",
+                                                                     "Type":  "timestamp",
+                                                                     "Comment":  ""
+                                                                 },
+                                                                 {
+                                                                     "Name":  "load_timestamp",
+                                                                     "Type":  "timestamp",
+                                                                     "Comment":  ""
+                                                                 }
+                                                             ],
+                                                 "Location":  "s3://<DATA_BUCKET_NAME>/silver-txf/txf_customers/",
+                                                 "InputFormat":  "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
+                                                 "OutputFormat":  "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat",
+                                                 "Compressed":  false,
+                                                 "NumberOfBuckets":  0,
+                                                 "SerdeInfo":  {
+                                                                   "SerializationLibrary":  "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe",
+                                                                   "Parameters":  {
+
+                                                                                  }
+                                                               },
+                                                 "SortColumns":  [
+
+                                                                 ],
+                                                 "StoredAsSubDirectories":  false
+                                             },
+                       "PartitionKeys":  [
+                                             {
+                                                 "Name":  "date_process",
+                                                 "Type":  "date",
+                                                 "Comment":  ""
+                                             }
+                                         ],
+                       "TableType":  "EXTERNAL_TABLE",
+                       "Parameters":  {
+                                          "CreatedByJobRun":  "jr_4841d9726df45c36bb61a13918d52125643dc189faef372844c453053d776659",
+                                          "useGlueParquetWriter":  "true",
+                                          "CreatedByJob":  "ingest_txf_customers",
+                                          "classification":  "parquet",
+                                          "UpdatedByJobRun":  "jr_3fa2eff347004398434a938a8db0b80714223b75161ff52b74ee1daf44525bc8",
+                                          "UpdatedByJob":  "ingest_txf_customers"
+                                      }
+                   }
+}

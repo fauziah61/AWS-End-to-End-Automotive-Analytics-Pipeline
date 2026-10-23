@@ -1,0 +1,77 @@
+{
+    "Name":  "crawler_source_rds",
+    "Role":  "AWSGlueServiceRole",
+    "DatabaseName":  "src_rds",
+    "Targets":  {
+                    "S3Targets":  [
+
+                                  ],
+                    "JdbcTargets":  [
+                                        {
+                                            "ConnectionName":  "Postgresql connection",
+                                            "Path":  "postgres/public/stg_after_sales_raw",
+                                            "Exclusions":  [
+
+                                                           ],
+                                            "EnableAdditionalMetadata":  [
+
+                                                                         ]
+                                        },
+                                        {
+                                            "ConnectionName":  "Postgresql connection",
+                                            "Path":  "postgres/public/stg_sales_raw",
+                                            "Exclusions":  [
+
+                                                           ],
+                                            "EnableAdditionalMetadata":  [
+
+                                                                         ]
+                                        },
+                                        {
+                                            "ConnectionName":  "Postgresql connection",
+                                            "Path":  "postgres/public/stg_customers_raw",
+                                            "Exclusions":  [
+
+                                                           ],
+                                            "EnableAdditionalMetadata":  [
+
+                                                                         ]
+                                        }
+                                    ],
+                    "MongoDBTargets":  [
+
+                                       ],
+                    "DynamoDBTargets":  [
+
+                                        ],
+                    "CatalogTargets":  [
+
+                                       ],
+                    "DeltaTargets":  [
+
+                                     ],
+                    "IcebergTargets":  [
+
+                                       ],
+                    "HudiTargets":  [
+
+                                    ]
+                },
+    "Classifiers":  [
+
+                    ],
+    "SchemaChangePolicy":  {
+                               "UpdateBehavior":  "UPDATE_IN_DATABASE",
+                               "DeleteBehavior":  "DEPRECATE_IN_DATABASE"
+                           },
+    "RecrawlPolicy":  {
+                          "RecrawlBehavior":  "CRAWL_EVERYTHING"
+                      },
+    "LineageConfiguration":  {
+                                 "CrawlerLineageSettings":  "DISABLE"
+                             },
+    "LakeFormationConfiguration":  {
+                                       "UseLakeFormationCredentials":  false,
+                                       "AccountId":  ""
+                                   }
+}

@@ -1,0 +1,70 @@
+{
+    "DatabaseName":  "gold_mart",
+    "TableInput":  {
+                       "Name":  "mart_sales",
+                       "LastAccessTime":  "1970-01-01T07:00:00+07:00",
+                       "Retention":  0,
+                       "StorageDescriptor":  {
+                                                 "Columns":  [
+                                                                 {
+                                                                     "Name":  "periode",
+                                                                     "Type":  "string"
+                                                                 },
+                                                                 {
+                                                                     "Name":  "class",
+                                                                     "Type":  "string"
+                                                                 },
+                                                                 {
+                                                                     "Name":  "model",
+                                                                     "Type":  "string"
+                                                                 },
+                                                                 {
+                                                                     "Name":  "total",
+                                                                     "Type":  "decimal(38,5)"
+                                                                 },
+                                                                 {
+                                                                     "Name":  "load_timestamp",
+                                                                     "Type":  "timestamp"
+                                                                 }
+                                                             ],
+                                                 "Location":  "s3://<DATA_BUCKET_NAME>/gold-mart/mart_sales/",
+                                                 "InputFormat":  "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
+                                                 "OutputFormat":  "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat",
+                                                 "Compressed":  false,
+                                                 "NumberOfBuckets":  0,
+                                                 "SerdeInfo":  {
+                                                                   "SerializationLibrary":  "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe",
+                                                                   "Parameters":  {
+
+                                                                                  }
+                                                               },
+                                                 "BucketColumns":  [
+
+                                                                   ],
+                                                 "SortColumns":  [
+
+                                                                 ],
+                                                 "Parameters":  {
+
+                                                                },
+                                                 "StoredAsSubDirectories":  false
+                                             },
+                       "PartitionKeys":  [
+
+                                         ],
+                       "TableType":  "EXTERNAL_TABLE",
+                       "Parameters":  {
+                                          "last_modified_time":  "1792244430",
+                                          "totalSize":  "2984",
+                                          "CreatedByJob":  "ingest_mart_sales",
+                                          "useGlueParquetWriter":  "true",
+                                          "numRows":  "-1",
+                                          "rawDataSize":  "-1",
+                                          "COLUMN_STATS_ACCURATE":  "false",
+                                          "numFiles":  "3",
+                                          "CreatedByJobRun":  "jr_4a457a72d5c870432e860e910268f35f7f0b236e55fc928f757f1a01738ef95c",
+                                          "last_modified_by":  "hadoop",
+                                          "classification":  "parquet"
+                                      }
+                   }
+}

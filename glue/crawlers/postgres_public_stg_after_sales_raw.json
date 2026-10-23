@@ -1,0 +1,57 @@
+{
+    "Name":  "postgres_public_stg_after_sales_raw",
+    "Role":  "AWSGlueServiceRole",
+    "DatabaseName":  "bronze_stg",
+    "Targets":  {
+                    "S3Targets":  [
+
+                                  ],
+                    "JdbcTargets":  [
+                                        {
+                                            "ConnectionName":  "Postgresql connection",
+                                            "Path":  "postgres/public/stg_after_sales_raw",
+                                            "Exclusions":  [
+
+                                                           ],
+                                            "EnableAdditionalMetadata":  [
+
+                                                                         ]
+                                        }
+                                    ],
+                    "MongoDBTargets":  [
+
+                                       ],
+                    "DynamoDBTargets":  [
+
+                                        ],
+                    "CatalogTargets":  [
+
+                                       ],
+                    "DeltaTargets":  [
+
+                                     ],
+                    "IcebergTargets":  [
+
+                                       ],
+                    "HudiTargets":  [
+
+                                    ]
+                },
+    "Classifiers":  [
+
+                    ],
+    "SchemaChangePolicy":  {
+                               "UpdateBehavior":  "UPDATE_IN_DATABASE",
+                               "DeleteBehavior":  "DEPRECATE_IN_DATABASE"
+                           },
+    "RecrawlPolicy":  {
+                          "RecrawlBehavior":  "CRAWL_EVERYTHING"
+                      },
+    "LineageConfiguration":  {
+                                 "CrawlerLineageSettings":  "DISABLE"
+                             },
+    "LakeFormationConfiguration":  {
+                                       "UseLakeFormationCredentials":  false,
+                                       "AccountId":  ""
+                                   }
+}
