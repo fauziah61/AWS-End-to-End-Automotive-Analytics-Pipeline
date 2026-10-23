@@ -410,7 +410,7 @@ Each jobs run in paralel and if one of them failed will trigger email notificati
 
 	Schedule sf_ingest_silver (step functions) to run everyday at 08.00 A.M. WIB
 	
-	Pilih Recurring schedule → Cron-based schedule, cron(0 8 * * ? *), flexible time windows: Off
+	Choose Recurring schedule → Cron-based schedule, cron(0 8 * * ? *), flexible time windows: Off
 
 	Select target sf_ingest_silver
 
@@ -418,7 +418,7 @@ Each jobs run in paralel and if one of them failed will trigger email notificati
 
 	Schedule sf_ingest_gold_mart (step functions) to run everyday at 10.00 A.M. WIB
 
-	Pilih Recurring schedule → Cron-based schedule, cron(0 10 * * ? *), flexible time windows: Off
+  	Choose Recurring schedule → Cron-based schedule, cron(0 10 * * ? *), flexible time windows: Off
 
 	Select target sf_ingest_gold_mart
 
