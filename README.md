@@ -2,7 +2,7 @@
 
 End-to-end AWS data pipeline using Amazon RDS (PostgreSQL), Amazon S3, Amazon Glue ETL, Amazon Athena, Amazon Step Functions, EventBridge, and Amazon SNS with a medallion architecture.
 
-![alt text](<AWS Automotive Analytics Pipeline Flow.png>)
+![alt text](<images/AWS Automotive Analytics Pipeline Flow.png>)
 
 Tools used:
 - AWS RDS (PostgreSQL)
@@ -22,25 +22,25 @@ Step by step:
 
     There are 3 raw tables in rds:
 - after sales table:
-![alt text](image-5.png)
+![alt text](images/image-5.png)
 - customers table:
-![alt text](image-6.png)
+![alt text](images/image-6.png)
 customers table need to be cleansed to have a standardized dob format
 - sales table:
-![alt text](image-7.png)
+![alt text](images/image-7.png)
 - customer address data in csv format in S3:
-![alt text](image-9.png)
+![alt text](images/image-9.png)
 '|@~' is set as the delimiter, which will later be parsed by the AWS Glue Crawler using a Grok pattern to separate the columns.
 
 ##
 2. Access Preparation (IAM Role & VPC)
 
 - Create I AM role called `AWSGlueServiceRole`
-![alt text](image.png)
-![alt text](image-1.png)
-![alt text](image-2.png)
-![alt text](image-3.png)
-![alt text](image-4.png)
+![alt text](images/image.png)
+![alt text](images/image-1.png)
+![alt text](images/image-2.png)
+![alt text](images/image-3.png)
+![alt text](images/image-4.png)
 - glue-get-connections-permission:
 {
 	"Version": "2012-10-17",
@@ -126,10 +126,10 @@ aws ec2 create-vpc-endpoint \
 ##
 4. Create AWS Glue ETL Job:
 - Add rds data connection:
-![alt text](image-10.png)
+![alt text](images/image-10.png)
 
 - Create crawlers & run:
-![alt text](image-11.png)
+![alt text](images/image-11.png)
 
 4.1. Create Glue Visual ETL Job:
 
@@ -137,24 +137,24 @@ aws ec2 create-vpc-endpoint \
 
 a. Silver layer job:
 - ingest_txf_after_sales
-![alt text](image-12.png)
+![alt text](images/image-12.png)
 Extracts after-sales data from PostgreSQL for initial or daily loads, selects and maps fields, adds load timestamps and transaction dates, handles duplicates, and writes the processed data to Amazon S3 silver layer (table txf)
 - ingest_txf_customers
-![alt text](image-13.png)
+![alt text](images/image-13.png)
 Extracts customer data from PostgreSQL, converts date-of-birth values, adds a load timestamp, handles duplicates, and writes the processed data to Amazon S3 silver layer table (table txf)
 - ingest_txf_sales
-![alt text](image-14.png)
+![alt text](images/image-14.png)
 Extracts and filters sales data from PostgreSQL, maps fields, converts prices, adds load timestamps and transaction dates, handles duplicates, and writes the processed data to Amazon S3 silver layer table (table txf)
 
 b. Gold layer job:
 
 - ingest_mart_cust_service_prio
-![alt text](image-18.png)
-![alt text](image-19.png)
+![alt text](images/image-18.png)
+![alt text](images/image-19.png)
 This AWS Glue job counts annual customer services, joins the latest customer and address records, assigns service priorities, adds a load timestamp, and replaces the previous customer service priority mart in Amazon S3.
 
 - ingest_mart_sales
-![alt text](image-20.png)
+![alt text](images/image-20.png)
 This AWS Glue job reads sales data from the Data Catalog, aggregates monthly sales by price class and vehicle model, adds a load timestamp, and replaces the previous sales mart in Amazon S3.
 
 
@@ -396,13 +396,13 @@ print(f"Catalog: {TARGET_DATABASE}.{TARGET_TABLE}; partition: {date_process}")
 5. Create AWS Step Functions Workflow:
 - Create AWS SNS topic called 
 `data-pipeline-failure`
-![alt text](image-15.png)
+![alt text](images/image-15.png)
 - Create state machines
 - Create step functions for all of silver layer jobs in paralel (sf_ingest_silver) -> standard type
-![alt text](image-16.png)
+![alt text](images/image-16.png)
 Each jobs run in paralel and if one of them failed will trigger email notifications using AWS SNS
 - Create step functions for all of gold layer jobs in paralel (sf_ingest_gold_mart) -> standard type
-![alt text](image-17.png)
+![alt text](images/image-17.png)
 Each jobs run in paralel and if one of them failed will trigger email notifications using AWS SNS
 ##
 6. Create AWS EventBridge:
@@ -427,27 +427,27 @@ Each jobs run in paralel and if one of them failed will trigger email notificati
 
 7.1. Bronze Layer
 - customer address csv
-![alt text](image-26.png)
+![alt text](images/image-26.png)
 
 7.2. Silver Layer
 
-![alt text](image-27.png)
+![alt text](images/image-27.png)
 - txf after sales
-![alt text](image-28.png)
+![alt text](images/image-28.png)
 - txf sales
-![alt text](image-29.png)
+![alt text](images/image-29.png)
 - txf customers
-![alt text](image-30.png)
+![alt text](images/image-30.png)
 - txf customers_address
-![alt text](image-31.png)
+![alt text](images/image-31.png)
 
 7.3. Gold Layer (Data Mart)
 
-![alt text](image-32.png)
+![alt text](images/image-32.png)
 - mart customer service priority
-![alt text](image-33.png)
+![alt text](images/image-33.png)
 - mart sales
-![alt text](image-34.png)
+![alt text](images/image-34.png)
 
 
 
